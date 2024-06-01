@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 public class JungleRush extends Game {
-	final int SCREEN_WIDTH = 1080, SCREEN_HEIGHT = 720;
+	final int SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 800;
 	SpriteBatch batch;
 	BitmapFont font;
 	
