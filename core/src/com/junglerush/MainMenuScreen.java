@@ -4,28 +4,27 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 public class MainMenuScreen implements Screen {
 
     private final JungleRush game;
-    private float opacityContrl = 0.3f;
+    private float opacityControl = 0.3f;
     private boolean increase = true;
     public MainMenuScreen(JungleRush game)
     {
         this.game = game;
     }
 
-    private void blinkingEffect()
+    public void blinkingEffect()
     {
-        game.font.setColor(this.opacityContrl,1,1, this.opacityContrl);
+        game.font.setColor(this.opacityControl,1,1, this.opacityControl);
         if(increase)
-            this.opacityContrl+=0.04f;
+            this.opacityControl +=0.04f;
         else
-            this.opacityContrl-= 0.03f;
-        if(this.opacityContrl >= 1) increase = false;
-        else if(this.opacityContrl <= 0.3) increase = true;
+            this.opacityControl -= 0.03f;
+        if(this.opacityControl >= 1) increase = false;
+        else if(this.opacityControl <= 0.3) increase = true;
     }
 
     @Override
@@ -50,7 +49,7 @@ public class MainMenuScreen implements Screen {
 
         if(Gdx.input.isTouched()||Gdx.input.isKeyPressed(Input.Keys.SPACE))
         {
-            game.setScreen(new GameScreen(game));
+            game.setScreen(new GameScreen(game,this));
             dispose();
         }
 

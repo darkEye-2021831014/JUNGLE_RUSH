@@ -3,6 +3,7 @@ package com.junglerush;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -12,18 +13,20 @@ import java.awt.*;
 public class GameScreen implements Screen {
 
     private final JungleRush game;
-    private Texture tRoad,tRiver;
-    private Array<Texture> trees,backgrounds;
-    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect;
-    private Rectangle riverRect;
+    private final MainMenuScreen menu;
+    private Texture tRoad,tRiver,tMainCharacter;
+    private Array<Texture> trees,backgrounds,animalsCrab;
+    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect,animalsRect,roadBoarder;
+    private Rectangle riverRect,mcRect;
 
-    private final int TOTAL_TILES = 20,aniSpeed = 20,SPEED = 5,treeRandomFactor = 6;
-    private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH;
+    private final int TOTAL_TILES = 20,aniSpeed = 20,SPEED = 5,treeRandomFactor = 6,score = 2;
+    private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,BOARDER_WIDTH;
     private int aniTick = 0,aniIndex = 0;
 
-    public GameScreen(final JungleRush game)
+    public GameScreen(final JungleRush game,final MainMenuScreen menu)
     {
         this.game = game;
+        this.menu = menu;
         tRoad = new Texture("Road.jpeg");
 
         initializeBackground();
@@ -36,25 +39,84 @@ public class GameScreen implements Screen {
         //load all available trees
         loadTrees();
         loadBackground();
+        loadAnimals();
+        loadCars();
         initializeRectangles();
+
 
     }
 
-    private void loadBackground() {
-        backgrounds = new Array<>();
-        for(int i=0;i < 2;i++)
-            backgrounds.add(new Texture("Background/water.bmp"));
+    private void loadCars() {
+        tMainCharacter = new Texture("mainCar.png");
+    }
 
-        tRiver = new Texture("Background/River.bmp");
+    private void loadAnimals() {
+        animalsCrab = new Array<>();
+        for(int i=1;i<=3;i++)
+            animalsCrab.add(new Texture("Enemy/Living/Crab_shadow"+i+".png"));
     }
 
 
     @Override
     public void render(float v) {
-        ScreenUtils.clear(0,0,0.3f,1);
+        ScreenUtils.clear(0, 0, 0.3f, 1);
 
+        menu.blinkingEffect();
 
         game.batch.begin();
+        drawBackground();
+        drawTrees();
+        drawMainCharacter();
+        drawAnimals();
+        game.batch.end();
+
+        update();
+    }
+
+    private void drawMainCharacter() {
+        game.batch.draw(tMainCharacter,mcRect.x,mcRect.y,mcRect.width,mcRect.height);
+
+        drawScore();
+
+    }
+
+    private void drawScore() {
+        GlyphLayout g1 = new GlyphLayout(game.font,Integer.toString(score));
+        float textX = mcRect.x+ ( mcRect.width- g1.width)/2f;
+        float textY = mcRect.y + (mcRect.height+g1.height)/2f;
+        game.font.draw(game.batch,g1,textX,textY);
+    }
+
+    private void drawAnimals() {
+        game.batch.draw(animalsCrab.get(this.aniIndex),animalsRect.get(0).x,animalsRect.get(0).y);
+    }
+
+    private void update()
+    {
+        //simulate road movement
+        updateRoad();
+        //simulate random tree spawn and tree movement
+        updateTrees();
+        //simulate background image movement
+        updateBackground();
+
+        animateTrees(animalsCrab);
+
+
+    }
+
+
+
+
+    //all draw methods implementation
+    private void drawTrees() {
+        for (int i = 0; i < trees.size; i++)
+            game.batch.draw(trees.get(i),this.treeRectLeft.get(i).x,this.treeRectLeft.get(i).y,this.treeRectLeft.get(i).width,this.treeRectLeft.get(i).height);
+        for (int i = 0; i < trees.size; i++)
+            game.batch.draw(trees.get(i),this.treeRectRight.get(i).x,this.treeRectRight.get(i).y,this.treeRectRight.get(i).width,this.treeRectRight.get(i).height);
+    }
+
+    private void drawBackground() {
         for(int i = 0; i < 2; i++)
             game.batch.draw(backgrounds.get(0), this.backgroundRect.get(i).x,this.backgroundRect.get(i).y,this.backgroundRect.get(i).width,this.backgroundRect.get(i).height);
 
@@ -63,49 +125,33 @@ public class GameScreen implements Screen {
             game.batch.draw(backgrounds.get(1), this.backgroundRect.get(i).x,this.backgroundRect.get(i).y,this.backgroundRect.get(i).width,this.backgroundRect.get(i).height);
 
         game.batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+        //draw river
         game.batch.draw(tRiver,riverRect.x,riverRect.y,riverRect.width,riverRect.height);
 
+        //draw boarder
+        for(Rectangle rect:roadBoarder)
+            game.batch.draw(tRiver,rect.x,rect.y,rect.width,rect.height);
+
         game.batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        //draw road
         for(Rectangle rect:roadRect)
             game.batch.draw(tRoad,rect.x,rect.y,rect.width,rect.height);
 
-        for (int i = 0; i < trees.size; i++)
-            game.batch.draw(trees.get(i),this.treeRectLeft.get(i).x,this.treeRectLeft.get(i).y,this.treeRectLeft.get(i).width,this.treeRectLeft.get(i).height);
-        for (int i = 0; i < trees.size; i++)
-            game.batch.draw(trees.get(i),this.treeRectRight.get(i).x,this.treeRectRight.get(i).y,this.treeRectRight.get(i).width,this.treeRectRight.get(i).height);
 
-        game.batch.end();
-
-        update();
     }
 
-    private void update()
-    {
-        //simulate road movement
+
+
+    //all update methods implementation
+    private void updateRoad() {
         for(int i=0; i < this.roadRect.size;i++)
         {
             this.roadRect.get(i).y -= this.SPEED;
             if(this.roadRect.get(i).y <= -game.SCREEN_HEIGHT) this.roadRect.get(i).y = game.SCREEN_HEIGHT;
         }
+    }
 
-        //simulate random tree spawn and tree movement
-        for (int i = 0; i < this.treeRectLeft.size; i++)
-        {
-            this.treeRectLeft.get(i).y -= this.SPEED;
-            this.treeRectRight.get(i).y -= this.SPEED;
-            if(this.treeRectLeft.get(i).y <= -this.treeRectLeft.get(i).getHeight())
-            {
-                this.treeRectLeft.get(i).y = MathUtils.random(0,game.SCREEN_HEIGHT+this.treeRandomFactor*this.treeRectLeft.get(i).height);
-                this.treeRectLeft.get(i).x = MathUtils.random(0,this.JUNGLE_WIDTH-this.treeRectLeft.get(i).width);
-            }
-            if(this.treeRectRight.get(i).y <= -this.treeRectRight.get(i).getHeight())
-            {
-                this.treeRectRight.get(i).y = MathUtils.random(0,game.SCREEN_HEIGHT+this.treeRandomFactor*this.treeRectLeft.get(i).height);
-                this.treeRectRight.get(i).x = this.JUNGLE_WIDTH + this.ROAD_WIDTH + MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth());
-            }
-        }
-
-        //simulate background image movement
+    private void updateBackground() {
         for(int i=0;i < this.backgroundRect.size/2;i++)
         {
             this.backgroundRect.get(i).y--;
@@ -116,8 +162,24 @@ public class GameScreen implements Screen {
             this.backgroundRect.get(i).x++;
             if(this.backgroundRect.get(i).x >= game.SCREEN_WIDTH) this.backgroundRect.get(i).x = -game.SCREEN_WIDTH;
         }
+    }
 
-
+    private void updateTrees() {
+        for (int i = 0; i < this.treeRectLeft.size; i++)
+        {
+            this.treeRectLeft.get(i).y -= this.SPEED;
+            this.treeRectRight.get(i).y -= this.SPEED;
+            if(this.treeRectLeft.get(i).y <= -this.treeRectLeft.get(i).getHeight())
+            {
+                this.treeRectLeft.get(i).y = MathUtils.random(0,game.SCREEN_HEIGHT+this.treeRandomFactor*this.treeRectLeft.get(i).height);
+                this.treeRectLeft.get(i).x = MathUtils.random(0, this.JUNGLE_WIDTH -trees.get(i).getWidth());
+            }
+            if(this.treeRectRight.get(i).y <= -this.treeRectRight.get(i).getHeight())
+            {
+                this.treeRectRight.get(i).y = MathUtils.random(0,game.SCREEN_HEIGHT+this.treeRandomFactor*this.treeRectLeft.get(i).height);
+                this.treeRectRight.get(i).x = this.JUNGLE_WIDTH + this.ROAD_WIDTH + 2*this.BOARDER_WIDTH+ MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth());
+            }
+        }
     }
 
     private void animateTrees(Array<Texture> component) {
@@ -176,24 +238,25 @@ public class GameScreen implements Screen {
         this.ELEMENT_HEIGHT = game.SCREEN_HEIGHT/this.TOTAL_TILES;
         this.JUNGLE_FACTOR = 6;
         this.ROAD_FACTOR = this.JUNGLE_FACTOR;
-        this.RIVER_FACTOR = 2;
+        this.RIVER_FACTOR = 1;
+        this.BOARDER_WIDTH = (int)(0.5 * this.ELEMENT_WIDTH);
         this.JUNGLE_WIDTH = this.JUNGLE_FACTOR * this.ELEMENT_WIDTH;
-        this.ROAD_WIDTH = this.ROAD_FACTOR * this.ELEMENT_WIDTH;
+        this.ROAD_WIDTH = this.JUNGLE_WIDTH;
     }
 
     private void initializeRectangles() {
         //road control rectangle
         roadRect = new Array<>();
-        roadRect.add(new Rectangle(this.JUNGLE_WIDTH, 0, this.ROAD_WIDTH, game.SCREEN_HEIGHT));
-        roadRect.add(new Rectangle(this.JUNGLE_WIDTH, game.SCREEN_HEIGHT, this.ROAD_WIDTH, game.SCREEN_HEIGHT));
+        roadRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH, 0, this.ROAD_WIDTH, game.SCREEN_HEIGHT));
+        roadRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH, game.SCREEN_HEIGHT, this.ROAD_WIDTH, game.SCREEN_HEIGHT));
 
         //tree control rectangle initialization
         treeRectLeft = new Array<>();
         treeRectRight = new Array<>();
         for (int i = 0; i < trees.size; i++)
         {
-            treeRectLeft.add(new Rectangle(MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth()), MathUtils.random(0, game.SCREEN_HEIGHT + this.treeRandomFactor * this.trees.get(i).getHeight()), trees.get(i).getWidth(), trees.get(i).getHeight()));
-            treeRectRight.add(new Rectangle(this.JUNGLE_WIDTH + this.ROAD_WIDTH + MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth()), MathUtils.random(0, game.SCREEN_HEIGHT + this.treeRandomFactor * this.trees.get(i).getHeight()), trees.get(i).getWidth(), trees.get(i).getHeight()));
+            treeRectLeft.add(new Rectangle(MathUtils.random(0, this.JUNGLE_WIDTH -trees.get(i).getWidth()), MathUtils.random(0, game.SCREEN_HEIGHT + this.treeRandomFactor * this.trees.get(i).getHeight()), trees.get(i).getWidth(), trees.get(i).getHeight()));
+            treeRectRight.add(new Rectangle(this.JUNGLE_WIDTH + this.ROAD_WIDTH + 2*this.BOARDER_WIDTH+ MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth()), MathUtils.random(0, game.SCREEN_HEIGHT + this.treeRandomFactor * this.trees.get(i).getHeight()), trees.get(i).getWidth(), trees.get(i).getHeight()));
         }
 
         //background control rectangle initialization
@@ -204,8 +267,21 @@ public class GameScreen implements Screen {
         backgroundRect.add(new Rectangle(-game.SCREEN_WIDTH,0,game.SCREEN_WIDTH,game.SCREEN_HEIGHT));
 
         //river control rectangle
-        riverRect = new Rectangle(this.JUNGLE_WIDTH*2+this.ROAD_WIDTH,0,this.ELEMENT_WIDTH*this.RIVER_FACTOR,game.SCREEN_HEIGHT);
+        riverRect = new Rectangle(this.JUNGLE_WIDTH*2+this.ROAD_WIDTH+this.BOARDER_WIDTH*2,0,this.ELEMENT_WIDTH*this.RIVER_FACTOR,game.SCREEN_HEIGHT);
 
+        //road boarder control rectangle
+        roadBoarder = new Array<>();
+        roadBoarder.add(new Rectangle(this.JUNGLE_WIDTH,0,this.BOARDER_WIDTH,game.SCREEN_HEIGHT));
+        roadBoarder.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH,0,this.BOARDER_WIDTH,game.SCREEN_HEIGHT));
+
+        //animal control rectangle
+        animalsRect = new Array<>();
+        animalsRect.add(new Rectangle(this.JUNGLE_WIDTH+MathUtils.random(0,this.ROAD_WIDTH-this.animalsCrab.get(0).getWidth()),
+                MathUtils.random(6*this.ELEMENT_HEIGHT,9*ELEMENT_HEIGHT),this.animalsCrab.get(0).getWidth(),this.animalsCrab.get(0).getHeight()));
+
+        //main character control rectangle
+        mcRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+MathUtils.random(0,this.ROAD_WIDTH-this.tMainCharacter.getWidth()),
+                0,this.tMainCharacter.getWidth(),tMainCharacter.getHeight());
     }
 
     private void loadTrees() {
@@ -298,8 +374,93 @@ public class GameScreen implements Screen {
         trees.add(new Texture("Trees/Cactus2_1.png"));
         trees.add(new Texture("Trees/Cactus2_2.png"));
         trees.add(new Texture("Trees/Cactus2_3.png"));
-    }
 
+        trees.add(new Texture("Trees/Palm_tree1_1.png"));
+        trees.add(new Texture("Trees/Palm_tree1_2.png"));
+        trees.add(new Texture("Trees/Palm_tree1_3.png"));
+
+        trees.add(new Texture("Trees/Palm_tree2_1.png"));
+        trees.add(new Texture("Trees/Palm_tree2_2.png"));
+        trees.add(new Texture("Trees/Palm_tree2_3.png"));
+
+        trees.add(new Texture("Trees/Snow_christmass_tree1.png"));
+        trees.add(new Texture("Trees/Snow_christmass_tree2.png"));
+        trees.add(new Texture("Trees/Snow_christmass_tree3.png"));
+
+        trees.add(new Texture("Trees/Snow_tree1.png"));
+        trees.add(new Texture("Trees/Snow_tree2.png"));
+        trees.add(new Texture("Trees/Snow_tree3.png"));
+
+        trees.add(new Texture("Trees/Tree1.png"));
+        trees.add(new Texture("Trees/Tree2.png"));
+        trees.add(new Texture("Trees/Tree3.png"));
+
+        trees.add(new Texture("Trees/Moss_tree1.png"));
+        trees.add(new Texture("Trees/Moss_tree2.png"));
+        trees.add(new Texture("Trees/Moss_tree3.png"));
+
+        trees.add(new Texture("Trees/Fruit_tree1.png"));
+        trees.add(new Texture("Trees/Fruit_tree2.png"));
+        trees.add(new Texture("Trees/Fruit_tree3.png"));
+
+        trees.add(new Texture("Trees/Autumn_tree1.png"));
+        trees.add(new Texture("Trees/Autumn_tree2.png"));
+        trees.add(new Texture("Trees/Autumn_tree3.png"));
+
+        trees.add(new Texture("Trees/Christmas_tree1.png"));
+        trees.add(new Texture("Trees/Christmas_tree2.png"));
+        trees.add(new Texture("Trees/Christmas_tree3.png"));
+
+        trees.add(new Texture("Trees/Flower_tree1.png"));
+        trees.add(new Texture("Trees/Flower_tree2.png"));
+        trees.add(new Texture("Trees/Flower_tree3.png"));
+
+        trees.add(new Texture("Trees/Blue-gray_ruins1.png"));
+        trees.add(new Texture("Trees/Blue-gray_ruins2.png"));
+        trees.add(new Texture("Trees/Blue-gray_ruins4.png"));
+
+        trees.add(new Texture("Trees/Yellow_ruins1.png"));
+        trees.add(new Texture("Trees/Yellow_ruins2.png"));
+        trees.add(new Texture("Trees/Yellow_ruins3.png"));
+        trees.add(new Texture("Trees/Yellow_ruins4.png"));
+        trees.add(new Texture("Trees/Yellow_ruins5.png"));
+
+        trees.add(new Texture("Trees/Blue_coral1_shadow1.png"));
+        trees.add(new Texture("Trees/Blue_coral1_shadow2.png"));
+        trees.add(new Texture("Trees/Blue_coral1_shadow3.png"));
+
+        trees.add(new Texture("Trees/Blue_coral2_shadow1.png"));
+        trees.add(new Texture("Trees/Blue_coral2_shadow2.png"));
+        trees.add(new Texture("Trees/Blue_coral2_shadow3.png"));
+
+        trees.add(new Texture("Trees/Blue-beige_coral1_shadow1.png"));
+        trees.add(new Texture("Trees/Blue-beige_coral1_shadow2.png"));
+        trees.add(new Texture("Trees/Blue-beige_coral1_shadow3.png"));
+
+        trees.add(new Texture("Trees/Blue-beige_coral2_shadow1.png"));
+        trees.add(new Texture("Trees/Blue-beige_coral2_shadow2.png"));
+        trees.add(new Texture("Trees/Blue-beige_coral2_shadow3.png"));
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+    private void loadBackground() {
+        backgrounds = new Array<>();
+        for(int i=0;i < 2;i++)
+            backgrounds.add(new Texture("Background/water.bmp"));
+
+        tRiver = new Texture("Background/River.bmp");
+    }
 
 
 }
