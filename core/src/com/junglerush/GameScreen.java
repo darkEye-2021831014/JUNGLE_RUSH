@@ -1,6 +1,7 @@
 package com.junglerush;
 
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
@@ -11,12 +12,13 @@ import java.awt.*;
 public class GameScreen implements Screen {
 
     private final JungleRush game;
-    private Texture tRoad;
-    private Array<Texture> trees;
-    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight;
+    private Texture tRoad,tRiver;
+    private Array<Texture> trees,backgrounds;
+    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect;
+    private Rectangle riverRect;
 
     private final int TOTAL_TILES = 20,aniSpeed = 20,SPEED = 5,treeRandomFactor = 6;
-    private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH;
+    private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH;
     private int aniTick = 0,aniIndex = 0;
 
     public GameScreen(final JungleRush game)
@@ -33,20 +35,39 @@ public class GameScreen implements Screen {
         initializeVariables();
         //load all available trees
         loadTrees();
+        loadBackground();
         initializeRectangles();
 
     }
 
+    private void loadBackground() {
+        backgrounds = new Array<>();
+        for(int i=0;i < 2;i++)
+            backgrounds.add(new Texture("Background/water.bmp"));
 
+        tRiver = new Texture("Background/River.bmp");
+    }
 
 
     @Override
     public void render(float v) {
         ScreenUtils.clear(0,0,0.3f,1);
 
+
         game.batch.begin();
-        game.batch.draw(tRoad,roadRect.get(0).x,roadRect.get(0).y,roadRect.get(0).width,roadRect.get(0).height);
-        game.batch.draw(tRoad,roadRect.get(1).x,roadRect.get(1).y,roadRect.get(1).width,roadRect.get(1).height);
+        for(int i = 0; i < 2; i++)
+            game.batch.draw(backgrounds.get(0), this.backgroundRect.get(i).x,this.backgroundRect.get(i).y,this.backgroundRect.get(i).width,this.backgroundRect.get(i).height);
+
+        game.batch.setBlendFunction(GL20.GL_DST_COLOR, GL20.GL_ZERO);
+        for(int i = 2; i < this.backgroundRect.size; i++)
+            game.batch.draw(backgrounds.get(1), this.backgroundRect.get(i).x,this.backgroundRect.get(i).y,this.backgroundRect.get(i).width,this.backgroundRect.get(i).height);
+
+        game.batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE);
+        game.batch.draw(tRiver,riverRect.x,riverRect.y,riverRect.width,riverRect.height);
+
+        game.batch.setBlendFunction(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+        for(Rectangle rect:roadRect)
+            game.batch.draw(tRoad,rect.x,rect.y,rect.width,rect.height);
 
         for (int i = 0; i < trees.size; i++)
             game.batch.draw(trees.get(i),this.treeRectLeft.get(i).x,this.treeRectLeft.get(i).y,this.treeRectLeft.get(i).width,this.treeRectLeft.get(i).height);
@@ -83,6 +104,19 @@ public class GameScreen implements Screen {
                 this.treeRectRight.get(i).x = this.JUNGLE_WIDTH + this.ROAD_WIDTH + MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth());
             }
         }
+
+        //simulate background image movement
+        for(int i=0;i < this.backgroundRect.size/2;i++)
+        {
+            this.backgroundRect.get(i).y--;
+            if(this.backgroundRect.get(i).y <= -game.SCREEN_HEIGHT) this.backgroundRect.get(i).y = game.SCREEN_HEIGHT;
+        }
+        for(int i=this.backgroundRect.size/2;i < this.backgroundRect.size;i++)
+        {
+            this.backgroundRect.get(i).x++;
+            if(this.backgroundRect.get(i).x >= game.SCREEN_WIDTH) this.backgroundRect.get(i).x = -game.SCREEN_WIDTH;
+        }
+
 
     }
 
@@ -141,7 +175,8 @@ public class GameScreen implements Screen {
         this.ELEMENT_WIDTH = game.SCREEN_WIDTH/this.TOTAL_TILES;
         this.ELEMENT_HEIGHT = game.SCREEN_HEIGHT/this.TOTAL_TILES;
         this.JUNGLE_FACTOR = 6;
-        this.ROAD_FACTOR = 8;
+        this.ROAD_FACTOR = this.JUNGLE_FACTOR;
+        this.RIVER_FACTOR = 2;
         this.JUNGLE_WIDTH = this.JUNGLE_FACTOR * this.ELEMENT_WIDTH;
         this.ROAD_WIDTH = this.ROAD_FACTOR * this.ELEMENT_WIDTH;
     }
@@ -160,6 +195,17 @@ public class GameScreen implements Screen {
             treeRectLeft.add(new Rectangle(MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth()), MathUtils.random(0, game.SCREEN_HEIGHT + this.treeRandomFactor * this.trees.get(i).getHeight()), trees.get(i).getWidth(), trees.get(i).getHeight()));
             treeRectRight.add(new Rectangle(this.JUNGLE_WIDTH + this.ROAD_WIDTH + MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth()), MathUtils.random(0, game.SCREEN_HEIGHT + this.treeRandomFactor * this.trees.get(i).getHeight()), trees.get(i).getWidth(), trees.get(i).getHeight()));
         }
+
+        //background control rectangle initialization
+        backgroundRect = new Array<>();
+        backgroundRect.add(new Rectangle(0,0,game.SCREEN_WIDTH,game.SCREEN_HEIGHT));
+        backgroundRect.add(new Rectangle(0,game.SCREEN_HEIGHT,game.SCREEN_WIDTH,game.SCREEN_HEIGHT));
+        backgroundRect.add(new Rectangle(0,0,game.SCREEN_WIDTH,game.SCREEN_HEIGHT));
+        backgroundRect.add(new Rectangle(-game.SCREEN_WIDTH,0,game.SCREEN_WIDTH,game.SCREEN_HEIGHT));
+
+        //river control rectangle
+        riverRect = new Rectangle(this.JUNGLE_WIDTH*2+this.ROAD_WIDTH,0,this.ELEMENT_WIDTH*this.RIVER_FACTOR,game.SCREEN_HEIGHT);
+
     }
 
     private void loadTrees() {
