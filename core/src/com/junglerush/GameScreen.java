@@ -1,5 +1,6 @@
 package com.junglerush;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
@@ -7,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
+import org.w3c.dom.css.Rect;
 
 import java.awt.*;
 
@@ -15,19 +17,20 @@ public class GameScreen implements Screen {
     private final JungleRush game;
     private final MainMenuScreen menu;
     private Texture tRoad,tRiver,tMainCharacter;
-    private Array<Texture> trees,backgrounds,animalsCrab;
-    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect,animalsRect,roadBoarder;
-    private Rectangle riverRect,mcRect;
+    private Array<Texture> trees,backgrounds,animals,enemies;
+    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect,roadBoarder;
+    private Rectangle riverRect,mcRect,animalRect,enemyRect;
 
-    private final int TOTAL_TILES = 20,aniSpeed = 20,SPEED = 5,treeRandomFactor = 6,score = 2;
+    private final int TOTAL_TILES = 20,treeRandomFactor = 6,score = 2;
     private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,BOARDER_WIDTH;
-    private int aniTick = 0,aniIndex = 0;
+    private int SPEED = 5,animalIndex,enemyIndex;
+    private boolean leftMove = false,rightMove = false,upMove = false,downMove = false;
 
     public GameScreen(final JungleRush game,final MainMenuScreen menu)
     {
         this.game = game;
         this.menu = menu;
-        tRoad = new Texture("Road.jpeg");
+        tRoad = new Texture("Background/Road.jpeg");
 
         initializeBackground();
 
@@ -40,20 +43,33 @@ public class GameScreen implements Screen {
         loadTrees();
         loadBackground();
         loadAnimals();
+        loadEnemies();
         loadCars();
         initializeRectangles();
 
 
     }
 
+    private void loadEnemies() {
+        enemies = new Array<>();
+        for(int i=1;i<=14;i++)
+            enemies.add(new Texture("Enemy/NonLiving/enemyCar"+i+".png"));
+
+        //set random enemy texture selector
+        this.enemyIndex =  MathUtils.random(0,enemies.size-1);
+    }
+
     private void loadCars() {
-        tMainCharacter = new Texture("mainCar.png");
+        tMainCharacter = new Texture("Background/mainCar.png");
     }
 
     private void loadAnimals() {
-        animalsCrab = new Array<>();
-        for(int i=1;i<=3;i++)
-            animalsCrab.add(new Texture("Enemy/Living/Crab_shadow"+i+".png"));
+        animals = new Array<>();
+        for(int i=1;i<=8;i++)
+            animals.add(new Texture("Enemy/Living/Animal"+i+".png"));
+
+        //set random texture selector
+        this.animalIndex =  MathUtils.random(0,animals.size-1);
     }
 
 
@@ -66,11 +82,16 @@ public class GameScreen implements Screen {
         game.batch.begin();
         drawBackground();
         drawTrees();
-        drawMainCharacter();
         drawAnimals();
+        drawEnemies();
+        drawMainCharacter();
         game.batch.end();
 
         update();
+    }
+
+    private void drawEnemies() {
+        game.batch.draw(enemies.get(this.enemyIndex),this.enemyRect.x,this.enemyRect.y);
     }
 
     private void drawMainCharacter() {
@@ -88,11 +109,18 @@ public class GameScreen implements Screen {
     }
 
     private void drawAnimals() {
-        game.batch.draw(animalsCrab.get(this.aniIndex),animalsRect.get(0).x,animalsRect.get(0).y);
+        game.batch.draw(animals.get(this.animalIndex),animalRect.x,animalRect.y);
     }
 
     private void update()
     {
+        Gdx.input.setInputProcessor(new ProcessInput(this));
+        //update main characters position based on input
+        updateMainCharacter();
+        //update animals
+        updateAnimals();
+        //update Enemies
+        updateEnemies();
         //simulate road movement
         updateRoad();
         //simulate random tree spawn and tree movement
@@ -100,10 +128,48 @@ public class GameScreen implements Screen {
         //simulate background image movement
         updateBackground();
 
-        animateTrees(animalsCrab);
 
 
     }
+
+    private void updateEnemies() {
+        enemyRect.y -= (this.SPEED/2);
+        if(enemyRect.y <= -enemies.get(this.enemyIndex).getHeight()) {
+            enemyRect.x = MathUtils.random(this.JUNGLE_WIDTH + this.BOARDER_WIDTH, this.JUNGLE_WIDTH + this.BOARDER_WIDTH + this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
+            enemyRect.y = MathUtils.random(20 * this.ELEMENT_HEIGHT, 22 * this.ELEMENT_HEIGHT);
+            this.enemyIndex =  MathUtils.random(0,enemies.size-1);
+        }
+    }
+
+    private void updateAnimals() {
+        animalRect.y -= this.SPEED;
+        if(animalRect.y <= -animals.get(this.animalIndex).getHeight()) {
+            animalRect.x = MathUtils.random(this.JUNGLE_WIDTH + this.BOARDER_WIDTH, this.JUNGLE_WIDTH + this.BOARDER_WIDTH + this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
+            animalRect.y = MathUtils.random(10 * this.ELEMENT_HEIGHT, 18 * this.ELEMENT_HEIGHT);
+            this.animalIndex =  MathUtils.random(0,animals.size-1);
+        }
+    }
+
+    private void updateMainCharacter() {
+        if(this.leftMove) this.mcRect.x -= this.SPEED;
+        if(this.rightMove) this.mcRect.x += this.SPEED;
+
+        //handle road movement
+        if(this.upMove) this.SPEED = 10;
+        else if(this.downMove)this.SPEED = 3;
+        else this.SPEED = 5;
+
+        //avoid gape in the road;
+        if((roadRect.get(0).y+roadRect.get(0).height) != roadRect.get(1).y &&
+                (roadRect.get(1).y+roadRect.get(1).height) != roadRect.get(0).y)
+        {
+            if(roadRect.get(0).y <= 0)
+                roadRect.get(1).y = roadRect.get(0).y+roadRect.get(0).height;
+            else if(roadRect.get(1).y <= 0)
+                roadRect.get(0).y = roadRect.get(1).y+roadRect.get(1).height;
+        }
+    }
+
 
 
 
@@ -136,8 +202,6 @@ public class GameScreen implements Screen {
         //draw road
         for(Rectangle rect:roadRect)
             game.batch.draw(tRoad,rect.x,rect.y,rect.width,rect.height);
-
-
     }
 
 
@@ -179,17 +243,6 @@ public class GameScreen implements Screen {
                 this.treeRectRight.get(i).y = MathUtils.random(0,game.SCREEN_HEIGHT+this.treeRandomFactor*this.treeRectLeft.get(i).height);
                 this.treeRectRight.get(i).x = this.JUNGLE_WIDTH + this.ROAD_WIDTH + 2*this.BOARDER_WIDTH+ MathUtils.random(0, this.JUNGLE_WIDTH - trees.get(i).getWidth());
             }
-        }
-    }
-
-    private void animateTrees(Array<Texture> component) {
-        this.aniTick++;
-        if(this.aniTick >= aniSpeed)
-        {
-            this.aniTick = 0;
-            this.aniIndex++;
-            if(this.aniIndex >= component.size)
-                this.aniIndex = 0;
         }
     }
 
@@ -275,12 +328,15 @@ public class GameScreen implements Screen {
         roadBoarder.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH,0,this.BOARDER_WIDTH,game.SCREEN_HEIGHT));
 
         //animal control rectangle
-        animalsRect = new Array<>();
-        animalsRect.add(new Rectangle(this.JUNGLE_WIDTH+MathUtils.random(0,this.ROAD_WIDTH-this.animalsCrab.get(0).getWidth()),
-                MathUtils.random(6*this.ELEMENT_HEIGHT,9*ELEMENT_HEIGHT),this.animalsCrab.get(0).getWidth(),this.animalsCrab.get(0).getHeight()));
+        animalRect = new Rectangle(MathUtils.random(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
+                MathUtils.random(10*this.ELEMENT_HEIGHT,18*this.ELEMENT_HEIGHT));
+
+        //enemy control rectangle
+        enemyRect = new Rectangle(MathUtils.random(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
+                MathUtils.random(20*this.ELEMENT_HEIGHT,22*this.ELEMENT_HEIGHT));
 
         //main character control rectangle
-        mcRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+MathUtils.random(0,this.ROAD_WIDTH-this.tMainCharacter.getWidth()),
+        mcRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+(this.ROAD_WIDTH-tMainCharacter.getWidth())/2,
                 0,this.tMainCharacter.getWidth(),tMainCharacter.getHeight());
     }
 
@@ -460,6 +516,27 @@ public class GameScreen implements Screen {
             backgrounds.add(new Texture("Background/water.bmp"));
 
         tRiver = new Texture("Background/River.bmp");
+    }
+
+
+
+
+    //getters & setters
+    public void setLeftMove(boolean value) {
+        this.leftMove = value;
+    }
+
+    public void setRightMove(boolean value) {
+        this.rightMove = value;
+    }
+
+    public void setUpMove(boolean value) {
+        this.upMove = value;
+    }
+
+    public void setDownMove(boolean value)
+    {
+        this.downMove = value;
     }
 
 
