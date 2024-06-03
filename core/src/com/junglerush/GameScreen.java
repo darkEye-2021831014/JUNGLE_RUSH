@@ -95,17 +95,17 @@ public class GameScreen implements Screen {
     }
 
     private void drawMainCharacter() {
-        game.batch.draw(tMainCharacter,mcRect.x,mcRect.y,mcRect.width,mcRect.height);
+        game.batch.draw(this.tMainCharacter,mcRect.x,mcRect.y,mcRect.width,mcRect.height);
 
         drawScore();
 
     }
 
     private void drawScore() {
-        GlyphLayout g1 = new GlyphLayout(game.font,Integer.toString(score));
+        GlyphLayout g1 = new GlyphLayout(game.fontBold,Integer.toString(score));
         float textX = mcRect.x+ ( mcRect.width- g1.width)/2f;
         float textY = mcRect.y + (mcRect.height+g1.height)/2f;
-        game.font.draw(game.batch,g1,textX,textY);
+        game.fontBold.draw(game.batch,g1,textX,textY);
     }
 
     private void drawAnimals() {
@@ -135,7 +135,7 @@ public class GameScreen implements Screen {
     private void updateEnemies() {
         enemyRect.y -= (this.SPEED/2);
         if(enemyRect.y <= -enemies.get(this.enemyIndex).getHeight()) {
-            enemyRect.x = MathUtils.random(this.JUNGLE_WIDTH + this.BOARDER_WIDTH, this.JUNGLE_WIDTH + this.BOARDER_WIDTH + this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
+            enemyRect.x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
             enemyRect.y = MathUtils.random(20 * this.ELEMENT_HEIGHT, 22 * this.ELEMENT_HEIGHT);
             this.enemyIndex =  MathUtils.random(0,enemies.size-1);
         }
@@ -144,8 +144,8 @@ public class GameScreen implements Screen {
     private void updateAnimals() {
         animalRect.y -= this.SPEED;
         if(animalRect.y <= -animals.get(this.animalIndex).getHeight()) {
-            animalRect.x = MathUtils.random(this.JUNGLE_WIDTH + this.BOARDER_WIDTH, this.JUNGLE_WIDTH + this.BOARDER_WIDTH + this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
-            animalRect.y = MathUtils.random(10 * this.ELEMENT_HEIGHT, 18 * this.ELEMENT_HEIGHT);
+            animalRect.x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
+            animalRect.y = MathUtils.random(16 * this.ELEMENT_HEIGHT, 18 * this.ELEMENT_HEIGHT);
             this.animalIndex =  MathUtils.random(0,animals.size-1);
         }
     }
@@ -328,12 +328,12 @@ public class GameScreen implements Screen {
         roadBoarder.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH,0,this.BOARDER_WIDTH,game.SCREEN_HEIGHT));
 
         //animal control rectangle
-        animalRect = new Rectangle(MathUtils.random(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
-                MathUtils.random(10*this.ELEMENT_HEIGHT,18*this.ELEMENT_HEIGHT));
+        animalRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
+                MathUtils.random(16*this.ELEMENT_HEIGHT,18*this.ELEMENT_HEIGHT),2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT);
 
         //enemy control rectangle
-        enemyRect = new Rectangle(MathUtils.random(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
-                MathUtils.random(20*this.ELEMENT_HEIGHT,22*this.ELEMENT_HEIGHT));
+        enemyRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
+                MathUtils.random(20*this.ELEMENT_HEIGHT,22*this.ELEMENT_HEIGHT),2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT);
 
         //main character control rectangle
         mcRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+(this.ROAD_WIDTH-tMainCharacter.getWidth())/2,

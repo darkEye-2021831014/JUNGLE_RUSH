@@ -18,7 +18,7 @@ public class MainMenuScreen implements Screen {
 
     public void blinkingEffect()
     {
-        game.font.setColor(this.opacityControl,1,1, this.opacityControl);
+        game.fontBold.setColor(this.opacityControl,1,1, this.opacityControl);
         if(increase)
             this.opacityControl +=0.04f;
         else
@@ -35,15 +35,15 @@ public class MainMenuScreen implements Screen {
        blinkingEffect();
 
         game.batch.begin();
-        GlyphLayout g1 = new GlyphLayout(game.font,welcome);
+        GlyphLayout g1 = new GlyphLayout(game.fontBold,welcome);
         float textX = (game.SCREEN_WIDTH - g1.width)/2;
         float textY = ((game.SCREEN_HEIGHT - g1.height)/2) +50;
-        game.font.draw(game.batch,g1,textX,textY);
+        game.fontBold.draw(game.batch,g1,textX,textY);
 
-        g1 = new GlyphLayout(game.font,play);
+        g1 = new GlyphLayout(game.fontBold,play);
         textX = (game.SCREEN_WIDTH - g1.width)/2;
         textY = (game.SCREEN_HEIGHT - g1.height)/2;
-        game.font.draw(game.batch,g1,textX,textY);
+        game.fontBold.draw(game.batch,g1,textX,textY);
 
         game.batch.end();
 
