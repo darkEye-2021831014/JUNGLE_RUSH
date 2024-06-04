@@ -18,12 +18,12 @@ public class GameScreen implements Screen {
     private final MainMenuScreen menu;
     private Texture tRoad,tRiver,tMainCharacter;
     private Array<Texture> trees,backgrounds,animals,enemies;
-    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect,roadBoarder;
-    private Rectangle riverRect,mcRect,animalRect,enemyRect;
+    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect,roadBoarder,animalRect;
+    private Rectangle riverRect,mcRect,enemyRect,currentAnimalRect;
 
     private final int TOTAL_TILES = 20,treeRandomFactor = 6,score = 2;
     private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,BOARDER_WIDTH;
-    private int SPEED = 5,animalIndex,enemyIndex;
+    private int SPEED = 5,animalIndex,enemyIndex,animalSpeed=3,enemySpeed=2;
     private boolean leftMove = false,rightMove = false,upMove = false,downMove = false;
 
     public GameScreen(final JungleRush game,final MainMenuScreen menu)
@@ -65,8 +65,8 @@ public class GameScreen implements Screen {
 
     private void loadAnimals() {
         animals = new Array<>();
-        for(int i=1;i<=8;i++)
-            animals.add(new Texture("Enemy/Living/Animal"+i+".png"));
+        for(int i=1;i<=22;i++)
+            animals.add(new Texture("Enemy/Living/animal"+i+".png"));
 
         //set random texture selector
         this.animalIndex =  MathUtils.random(0,animals.size-1);
@@ -109,7 +109,8 @@ public class GameScreen implements Screen {
     }
 
     private void drawAnimals() {
-        game.batch.draw(animals.get(this.animalIndex),animalRect.x,animalRect.y);
+        checkDirection(this.animalIndex);
+        game.batch.draw(animals.get(this.animalIndex),currentAnimalRect.x,currentAnimalRect.y);
     }
 
     private void update()
@@ -133,21 +134,46 @@ public class GameScreen implements Screen {
     }
 
     private void updateEnemies() {
-        enemyRect.y -= (this.SPEED/2);
+        enemyRect.y -= this.enemySpeed;
         if(enemyRect.y <= -enemies.get(this.enemyIndex).getHeight()) {
             enemyRect.x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
-            enemyRect.y = MathUtils.random(20 * this.ELEMENT_HEIGHT, 22 * this.ELEMENT_HEIGHT);
+            enemyRect.y = MathUtils.random(20 * this.ELEMENT_HEIGHT, 21 * this.ELEMENT_HEIGHT);
             this.enemyIndex =  MathUtils.random(0,enemies.size-1);
         }
     }
 
+    private int checkDirection(int value)
+    {
+        int i = 0;
+        if(value >= 8 && value < 15) i = 1;
+        else if(value >= 15 && value < 22) i = 2;
+        currentAnimalRect = this.animalRect.get(i);
+        return i;
+    }
+
     private void updateAnimals() {
-        animalRect.y -= this.SPEED;
-        if(animalRect.y <= -animals.get(this.animalIndex).getHeight()) {
-            animalRect.x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
-            animalRect.y = MathUtils.random(16 * this.ELEMENT_HEIGHT, 18 * this.ELEMENT_HEIGHT);
+        int i = 0;// i= 0(left to right), 1 ( right to left), 2 (static)
+        i = checkDirection(this.animalIndex);
+
+        animalRect.get(i).y -= this.SPEED;
+        if(i==0) animalRect.get(i).x += this.animalSpeed;
+        else if(i==1) animalRect.get(i).x -= this.animalSpeed;
+
+        if(animalRect.get(i).y <= -animals.get(this.animalIndex).getHeight() ||
+        animalRect.get(i).x <= (this.JUNGLE_WIDTH+this.BOARDER_WIDTH) ||
+        animalRect.get(i).x >= (this.JUNGLE_WIDTH + this.BOARDER_WIDTH +this.ROAD_WIDTH - (this.animals.get(this.animalIndex).getWidth()))) {
             this.animalIndex =  MathUtils.random(0,animals.size-1);
+
+            i = checkDirection(this.animalIndex);
+            animalRect.get(i).y = MathUtils.random(18 * this.ELEMENT_HEIGHT, 19 * this.ELEMENT_HEIGHT);
+
+            if(i==0)animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH;
+            else if(i==1)animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH+this.ROAD_WIDTH - (this.animals.get(this.animalIndex).getWidth());
+            else animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,
+                        this.ROAD_WIDTH - (this.animals.get(this.animalIndex).getWidth()));
         }
+
+        currentAnimalRect = animalRect.get(i);
     }
 
     private void updateMainCharacter() {
@@ -155,9 +181,18 @@ public class GameScreen implements Screen {
         if(this.rightMove) this.mcRect.x += this.SPEED;
 
         //handle road movement
-        if(this.upMove) this.SPEED = 10;
-        else if(this.downMove)this.SPEED = 3;
-        else this.SPEED = 5;
+        if(this.upMove) {
+            this.SPEED =10;
+            this.enemySpeed = 4;
+        }
+        else if(this.downMove) {
+            this.SPEED = 3;
+            this.enemySpeed = 1;
+        }
+        else {
+            this.SPEED = 5;
+            this.enemySpeed = 2;
+        }
 
         //avoid gape in the road;
         if((roadRect.get(0).y+roadRect.get(0).height) != roadRect.get(1).y &&
@@ -327,10 +362,6 @@ public class GameScreen implements Screen {
         roadBoarder.add(new Rectangle(this.JUNGLE_WIDTH,0,this.BOARDER_WIDTH,game.SCREEN_HEIGHT));
         roadBoarder.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH,0,this.BOARDER_WIDTH,game.SCREEN_HEIGHT));
 
-        //animal control rectangle
-        animalRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
-                MathUtils.random(16*this.ELEMENT_HEIGHT,18*this.ELEMENT_HEIGHT),2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT);
-
         //enemy control rectangle
         enemyRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
                 MathUtils.random(20*this.ELEMENT_HEIGHT,22*this.ELEMENT_HEIGHT),2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT);
@@ -338,6 +369,18 @@ public class GameScreen implements Screen {
         //main character control rectangle
         mcRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+(this.ROAD_WIDTH-tMainCharacter.getWidth())/2,
                 0,this.tMainCharacter.getWidth(),tMainCharacter.getHeight());
+
+        //Animal control Rectangle
+        this.animalRect = new Array<>();
+        //animal control for left to right animal index = 0
+        this.animalRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,MathUtils.random(18*this.ELEMENT_HEIGHT,19*this.ELEMENT_HEIGHT),
+                2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT));
+        //animal control for right to left animal index = 1
+        this.animalRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH-2*this.ELEMENT_WIDTH,
+                MathUtils.random(18*this.ELEMENT_HEIGHT,19*this.ELEMENT_HEIGHT),2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT));
+        //animal control for static animal index = 2
+        this.animalRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+MathUtils.random(0,this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
+                MathUtils.random(18*this.ELEMENT_HEIGHT,19*this.ELEMENT_HEIGHT), 2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT));
     }
 
     private void loadTrees() {
@@ -497,6 +540,8 @@ public class GameScreen implements Screen {
         trees.add(new Texture("Trees/Blue-beige_coral2_shadow2.png"));
         trees.add(new Texture("Trees/Blue-beige_coral2_shadow3.png"));
 
+        for(int i = 1; i <= 8; i++)
+            trees.add(new Texture("Trees/Animal"+i+".png"));
 
 
 
