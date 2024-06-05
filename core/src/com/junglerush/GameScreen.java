@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
@@ -11,6 +12,7 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import org.w3c.dom.css.Rect;
 
 import java.awt.*;
+import java.math.BigInteger;
 
 public class GameScreen implements Screen {
 
@@ -21,9 +23,11 @@ public class GameScreen implements Screen {
     private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect,roadBoarder,animalRect;
     private Rectangle riverRect,mcRect,enemyRect,currentAnimalRect;
 
-    private final int TOTAL_TILES = 20,treeRandomFactor = 6,score = 2;
+    private final int TOTAL_TILES = 20,treeRandomFactor = 6;
     private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,BOARDER_WIDTH;
-    private int SPEED = 5,animalIndex,enemyIndex,animalSpeed=3,enemySpeed=2;
+    private int SPEED = 5,animalIndex,enemyIndex,animalSpeed=3,enemySpeed=2,mcScoreFactor,enemyScoreFactor,animalScoreFactor,isPositiveAnimal;
+    private long enemyScore,animalScore;
+    private BigInteger mcScore;
     private boolean leftMove = false,rightMove = false,upMove = false,downMove = false;
 
     public GameScreen(final JungleRush game,final MainMenuScreen menu)
@@ -77,8 +81,6 @@ public class GameScreen implements Screen {
     public void render(float v) {
         ScreenUtils.clear(0, 0, 0.3f, 1);
 
-        menu.blinkingEffect();
-
         game.batch.begin();
         drawBackground();
         drawTrees();
@@ -92,25 +94,29 @@ public class GameScreen implements Screen {
 
     private void drawEnemies() {
         game.batch.draw(enemies.get(this.enemyIndex),this.enemyRect.x,this.enemyRect.y);
+        drawScore(this.enemyRect,this.enemies.get(this.enemyIndex),game.fontRegular,Long.toString(this.enemyScore));
     }
 
     private void drawMainCharacter() {
         game.batch.draw(this.tMainCharacter,mcRect.x,mcRect.y,mcRect.width,mcRect.height);
 
-        drawScore();
-
+        drawScore(this.mcRect,this.tMainCharacter,game.fontRegular,mcScore.toString());
     }
 
-    private void drawScore() {
-        GlyphLayout g1 = new GlyphLayout(game.fontBold,Integer.toString(score));
-        float textX = mcRect.x+ ( mcRect.width- g1.width)/2f;
-        float textY = mcRect.y + (mcRect.height+g1.height)/2f;
-        game.fontBold.draw(game.batch,g1,textX,textY);
+    private void drawScore(Rectangle rect, Texture texture, BitmapFont font,String value) {
+        menu.blinkingEffect(0.3f,font,0.02f,0.01f);
+
+        GlyphLayout g1 = new GlyphLayout(font, value);
+        float textX = rect.x+ ( texture.getWidth()- g1.width)/2f;
+        float textY = rect.y + (texture.getHeight()+g1.height)/2f;
+        font.draw(game.batch,g1,textX,textY);
     }
 
     private void drawAnimals() {
         checkDirection(this.animalIndex);
         game.batch.draw(animals.get(this.animalIndex),currentAnimalRect.x,currentAnimalRect.y);
+
+        drawScore(this.currentAnimalRect,this.animals.get(this.animalIndex),game.fontRegular,Long.toString(this.animalScore));
     }
 
     private void update()
@@ -139,6 +145,8 @@ public class GameScreen implements Screen {
             enemyRect.x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
             enemyRect.y = MathUtils.random(20 * this.ELEMENT_HEIGHT, 21 * this.ELEMENT_HEIGHT);
             this.enemyIndex =  MathUtils.random(0,enemies.size-1);
+            //set enemy score
+            setEnemyScore(Math.max(0,this.mcScoreFactor-3),Math.min(62,this.mcScoreFactor+5));
         }
     }
 
@@ -171,9 +179,26 @@ public class GameScreen implements Screen {
             else if(i==1)animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH+this.ROAD_WIDTH - (this.animals.get(this.animalIndex).getWidth());
             else animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,
                         this.ROAD_WIDTH - (this.animals.get(this.animalIndex).getWidth()));
+            //set new animal score
+            setAnimalScore(Math.max(0,this.mcScoreFactor-5),Math.min(62,this.mcScoreFactor+2));
         }
 
         currentAnimalRect = animalRect.get(i);
+    }
+
+    private void setAnimalScore(int lowerLimit,int upperLimit) {
+        this.isPositiveAnimal = (MathUtils.random(0,1)==0)?-1:1;
+        this.animalScoreFactor = MathUtils.random(lowerLimit,upperLimit);
+        this.animalScore = this.isPositiveAnimal * (1L << this.animalScoreFactor);
+    }
+    private void setEnemyScore(int lowerLimit,int upperLimit) {
+        this.enemyScoreFactor = MathUtils.random(lowerLimit,upperLimit);
+        this.enemyScore = 1L << this.enemyScoreFactor;
+    }
+    private void setMainCharacterScore(int value) {
+        this.mcScoreFactor = value;
+        long curValue = 1L << this.mcScoreFactor;
+        this.mcScore = this.mcScore.add(new BigInteger(Long.toString(curValue)));
     }
 
     private void updateMainCharacter() {
@@ -187,7 +212,7 @@ public class GameScreen implements Screen {
         }
         else if(this.downMove) {
             this.SPEED = 3;
-            this.enemySpeed = 1;
+            this.enemySpeed = 0;
         }
         else {
             this.SPEED = 5;
@@ -330,6 +355,12 @@ public class GameScreen implements Screen {
         this.BOARDER_WIDTH = (int)(0.5 * this.ELEMENT_WIDTH);
         this.JUNGLE_WIDTH = this.JUNGLE_FACTOR * this.ELEMENT_WIDTH;
         this.ROAD_WIDTH = this.JUNGLE_WIDTH;
+
+        //
+        this.mcScore = new BigInteger("0");
+        setMainCharacterScore(0);
+        setEnemyScore(Math.max(0,this.mcScoreFactor-3),Math.min(62,this.mcScoreFactor+5));
+        setAnimalScore(Math.max(0,this.mcScoreFactor-5),Math.min(62,this.mcScoreFactor+2));
     }
 
     private void initializeRectangles() {

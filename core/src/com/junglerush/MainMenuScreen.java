@@ -3,7 +3,9 @@ package com.junglerush;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 public class MainMenuScreen implements Screen {
@@ -16,15 +18,15 @@ public class MainMenuScreen implements Screen {
         this.game = game;
     }
 
-    public void blinkingEffect()
+    public void blinkingEffect(float lowerLimit, BitmapFont font,float increaseValue,float decreaseValue)
     {
-        game.fontBold.setColor(this.opacityControl,1,1, this.opacityControl);
+        font.setColor(this.opacityControl,1,1, this.opacityControl);
         if(increase)
-            this.opacityControl +=0.04f;
+            this.opacityControl +=increaseValue;
         else
-            this.opacityControl -= 0.03f;
+            this.opacityControl -= decreaseValue;
         if(this.opacityControl >= 1) increase = false;
-        else if(this.opacityControl <= 0.3) increase = true;
+        else if(this.opacityControl <= lowerLimit) increase = true;
     }
 
     @Override
@@ -32,18 +34,18 @@ public class MainMenuScreen implements Screen {
         ScreenUtils.clear(0,0,0.2f,1);
         String welcome = "Welcome To Jungle Rush!",
                 play = "Tap Anywhere Or Press Space To Play";
-       blinkingEffect();
+       blinkingEffect(0.3f,game.fontRegular,0.04f,0.03f);
 
         game.batch.begin();
-        GlyphLayout g1 = new GlyphLayout(game.fontBold,welcome);
+        GlyphLayout g1 = new GlyphLayout(game.fontRegular,welcome);
         float textX = (game.SCREEN_WIDTH - g1.width)/2;
         float textY = ((game.SCREEN_HEIGHT - g1.height)/2) +50;
-        game.fontBold.draw(game.batch,g1,textX,textY);
+        game.fontRegular.draw(game.batch,g1,textX,textY);
 
-        g1 = new GlyphLayout(game.fontBold,play);
+        g1 = new GlyphLayout(game.fontRegular,play);
         textX = (game.SCREEN_WIDTH - g1.width)/2;
         textY = (game.SCREEN_HEIGHT - g1.height)/2;
-        game.fontBold.draw(game.batch,g1,textX,textY);
+        game.fontRegular.draw(game.batch,g1,textX,textY);
 
         game.batch.end();
 

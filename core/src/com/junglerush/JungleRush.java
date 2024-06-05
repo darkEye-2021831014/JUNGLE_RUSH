@@ -15,7 +15,7 @@ public class JungleRush extends Game {
 	private FreeTypeFontGenerator generator;
 	private FreeTypeFontGenerator.FreeTypeFontParameter parameter;
 	SpriteBatch batch;
-	BitmapFont fontBold;
+	BitmapFont fontBold,fontRegular;
 
 
 	@Override
@@ -25,7 +25,14 @@ public class JungleRush extends Game {
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("Fonts/robotoMonoRegular.ttf"));
 		parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 		parameter.size = 28;
+		fontRegular = generator.generateFont(parameter);
+		//bold font
+		generator = new FreeTypeFontGenerator(Gdx.files.internal("Fonts/robotoMonoBold.ttf"));
+		parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+		parameter.size = 22;
 		fontBold = generator.generateFont(parameter);
+
+
 
 
 		this.setScreen(new MainMenuScreen(this));
