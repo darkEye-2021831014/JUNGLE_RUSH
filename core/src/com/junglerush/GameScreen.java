@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.math.Intersector;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -13,6 +15,9 @@ import org.w3c.dom.css.Rect;
 
 import java.awt.*;
 import java.math.BigInteger;
+import java.util.Iterator;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class GameScreen implements Screen {
 
@@ -28,7 +33,8 @@ public class GameScreen implements Screen {
     private int SPEED = 5,animalIndex,enemyIndex,animalSpeed=3,enemySpeed=2,mcScoreFactor,enemyScoreFactor,animalScoreFactor,isPositiveAnimal;
     private long enemyScore,animalScore;
     private BigInteger mcScore;
-    private boolean leftMove = false,rightMove = false,upMove = false,downMove = false;
+    private boolean leftMove = false,rightMove = false,upMove = false,downMove = false,GAME_OVER = false;
+    private TreeSet<BigInteger> scoreTree;
 
     public GameScreen(final JungleRush game,final MainMenuScreen menu)
     {
@@ -87,28 +93,45 @@ public class GameScreen implements Screen {
         drawAnimals();
         drawEnemies();
         drawMainCharacter();
+        drawScoreTree();
         game.batch.end();
 
         update();
     }
 
+    private void drawScoreTree() {
+        Iterator<BigInteger> descendingIterator = scoreTree.descendingIterator();
+        int scoreHeight = 25;
+        Rectangle scoreRect = new Rectangle(game.SCREEN_WIDTH-this.riverRect.width,game.SCREEN_HEIGHT-2*scoreHeight,this.riverRect.width,scoreHeight);
+        drawScore(scoreRect,game.fontBold,"Score\nTree");
+        scoreRect.y-=2*scoreHeight;
+        while (descendingIterator.hasNext())
+        {
+            String curScore = descendingIterator.next().toString();
+            drawScore(scoreRect,game.fontRegular,curScore);
+            scoreRect.y-=scoreHeight;
+            if(scoreRect.y <=0)break;
+        }
+
+    }
+
     private void drawEnemies() {
         game.batch.draw(enemies.get(this.enemyIndex),this.enemyRect.x,this.enemyRect.y);
-        drawScore(this.enemyRect,this.enemies.get(this.enemyIndex),game.fontRegular,Long.toString(this.enemyScore));
+        drawScore(this.enemyRect,game.fontRegular,Long.toString(this.enemyScore));
     }
 
     private void drawMainCharacter() {
         game.batch.draw(this.tMainCharacter,mcRect.x,mcRect.y,mcRect.width,mcRect.height);
 
-        drawScore(this.mcRect,this.tMainCharacter,game.fontRegular,mcScore.toString());
+        drawScore(this.mcRect,game.fontRegular,mcScore.toString());
     }
 
-    private void drawScore(Rectangle rect, Texture texture, BitmapFont font,String value) {
+    private void drawScore(Rectangle rect, BitmapFont font,String value) {
         menu.blinkingEffect(0.3f,font,0.02f,0.01f);
 
         GlyphLayout g1 = new GlyphLayout(font, value);
-        float textX = rect.x+ ( texture.getWidth()- g1.width)/2f;
-        float textY = rect.y + (texture.getHeight()+g1.height)/2f;
+        float textX = rect.x+ ( rect.width- g1.width)/2f;
+        float textY = rect.y + (rect.height+g1.height)/2f;
         font.draw(game.batch,g1,textX,textY);
     }
 
@@ -116,7 +139,7 @@ public class GameScreen implements Screen {
         checkDirection(this.animalIndex);
         game.batch.draw(animals.get(this.animalIndex),currentAnimalRect.x,currentAnimalRect.y);
 
-        drawScore(this.currentAnimalRect,this.animals.get(this.animalIndex),game.fontRegular,Long.toString(this.animalScore));
+        drawScore(this.currentAnimalRect,game.fontRegular, Long.toString(this.animalScore));
     }
 
     private void update()
@@ -134,19 +157,69 @@ public class GameScreen implements Screen {
         updateTrees();
         //simulate background image movement
         updateBackground();
+        //detect collision
+        detectCollision();
 
 
 
     }
 
+    private void detectCollision() {
+        this.mcScoreFactor = calculateMcScoreFactor();
+
+        //detect collision with road boarder
+        for(Rectangle rect: roadBoarder)
+            if(this.mcRect.overlaps(rect))
+            {
+                this.GAME_OVER = true;
+                return;
+            }
+
+        //detect collision with enemies
+        if(this.mcRect.overlaps(this.enemyRect))
+        {
+            if(this.enemyScoreFactor > this.mcScoreFactor)
+            {
+                this.GAME_OVER = true;
+                return;
+            }
+            else
+            {
+                //mc score will increase
+                setMainCharacterScore(this.enemyScoreFactor);
+                spawnNewEnemy();
+            }
+        }
+
+    }
+
+    private void spawnNewEnemy() {
+        this.enemyIndex =  MathUtils.random(0,enemies.size-1);
+        enemyRect.x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,
+                this.ROAD_WIDTH - this.enemies.get(this.enemyIndex).getWidth());
+        enemyRect.y = 20 * this.ELEMENT_HEIGHT;
+        enemyRect.width = this.enemies.get(this.enemyIndex).getWidth();
+        enemyRect.height = this.enemies.get(this.enemyIndex).getHeight();
+        //set enemy score
+        setEnemyScore(Math.max(0,this.mcScoreFactor-3),Math.min(62,this.mcScoreFactor+5));
+    }
+
+    private int calculateMcScoreFactor() {
+        String highest = Long.toString((1L << 63)-1L);
+        int result = this.mcScore.toString().compareTo(highest); // result = - 1 ( str1 is less than str 2), 0 ( both str are equal),
+        // 1 (st1 is greater than str2)
+        if(result <= 0)
+        {
+            long curScore = this.mcScore.longValue();
+            return (int)Math.floor(Math.log(curScore)/Math.log(2));
+        }
+        return 62;
+    }
+
     private void updateEnemies() {
         enemyRect.y -= this.enemySpeed;
         if(enemyRect.y <= -enemies.get(this.enemyIndex).getHeight()) {
-            enemyRect.x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH - 2 * this.ELEMENT_WIDTH);
-            enemyRect.y = MathUtils.random(20 * this.ELEMENT_HEIGHT, 21 * this.ELEMENT_HEIGHT);
-            this.enemyIndex =  MathUtils.random(0,enemies.size-1);
-            //set enemy score
-            setEnemyScore(Math.max(0,this.mcScoreFactor-3),Math.min(62,this.mcScoreFactor+5));
+            spawnNewEnemy();
         }
     }
 
@@ -176,7 +249,8 @@ public class GameScreen implements Screen {
             animalRect.get(i).y = MathUtils.random(18 * this.ELEMENT_HEIGHT, 19 * this.ELEMENT_HEIGHT);
 
             if(i==0)animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH;
-            else if(i==1)animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH+this.ROAD_WIDTH - (this.animals.get(this.animalIndex).getWidth());
+            else if(i==1)animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH+this.ROAD_WIDTH -
+                    (this.animals.get(this.animalIndex).getWidth());
             else animalRect.get(i).x = this.JUNGLE_WIDTH + this.BOARDER_WIDTH + MathUtils.random(0,
                         this.ROAD_WIDTH - (this.animals.get(this.animalIndex).getWidth()));
             //set new animal score
@@ -196,9 +270,15 @@ public class GameScreen implements Screen {
         this.enemyScore = 1L << this.enemyScoreFactor;
     }
     private void setMainCharacterScore(int value) {
-        this.mcScoreFactor = value;
-        long curValue = 1L << this.mcScoreFactor;
-        this.mcScore = this.mcScore.add(new BigInteger(Long.toString(curValue)));
+        long curValue = 1L << value;
+        while(this.scoreTree.contains(new BigInteger(Long.toString(curValue))))
+        {
+            this.scoreTree.remove(new BigInteger(Long.toString(curValue)));
+            curValue += curValue;
+        }
+        this.scoreTree.add(new BigInteger(Long.toString(curValue)));
+
+        this.mcScore = this.scoreTree.last();
     }
 
     private void updateMainCharacter() {
@@ -357,6 +437,7 @@ public class GameScreen implements Screen {
         this.ROAD_WIDTH = this.JUNGLE_WIDTH;
 
         //
+        scoreTree = new TreeSet<>();
         this.mcScore = new BigInteger("0");
         setMainCharacterScore(0);
         setEnemyScore(Math.max(0,this.mcScoreFactor-3),Math.min(62,this.mcScoreFactor+5));
@@ -394,8 +475,9 @@ public class GameScreen implements Screen {
         roadBoarder.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH,0,this.BOARDER_WIDTH,game.SCREEN_HEIGHT));
 
         //enemy control rectangle
-        enemyRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH + MathUtils.random(0,this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
-                MathUtils.random(20*this.ELEMENT_HEIGHT,22*this.ELEMENT_HEIGHT),2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT);
+        enemyRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH + MathUtils.random(0,
+                this.ROAD_WIDTH-this.enemies.get(this.enemyIndex).getWidth()), 20*this.ELEMENT_HEIGHT,
+                this.enemies.get(this.enemyIndex).getWidth(),this.enemies.get(this.enemyIndex).getHeight() );
 
         //main character control rectangle
         mcRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+(this.ROAD_WIDTH-tMainCharacter.getWidth())/2,
@@ -404,14 +486,19 @@ public class GameScreen implements Screen {
         //Animal control Rectangle
         this.animalRect = new Array<>();
         //animal control for left to right animal index = 0
-        this.animalRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,MathUtils.random(18*this.ELEMENT_HEIGHT,19*this.ELEMENT_HEIGHT),
-                2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT));
+        this.animalRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,MathUtils.random(18*this.ELEMENT_HEIGHT,19*this.ELEMENT_HEIGHT), this.animals.get(this.animalIndex).getWidth(),
+                this.animals.get(this.animalIndex).getHeight()));
         //animal control for right to left animal index = 1
-        this.animalRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH-2*this.ELEMENT_WIDTH,
-                MathUtils.random(18*this.ELEMENT_HEIGHT,19*this.ELEMENT_HEIGHT),2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT));
+        this.animalRect.add(new Rectangle(
+                this.JUNGLE_WIDTH+this.BOARDER_WIDTH+ this.ROAD_WIDTH-this.animals.get(this.animalIndex).getWidth(),
+                MathUtils.random(18*this.ELEMENT_HEIGHT,19*this.ELEMENT_HEIGHT),
+                this.animals.get(this.animalIndex).getWidth(),
+                this.animals.get(this.animalIndex).getHeight()));
         //animal control for static animal index = 2
-        this.animalRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+MathUtils.random(0,this.ROAD_WIDTH-2*this.ELEMENT_WIDTH),
-                MathUtils.random(18*this.ELEMENT_HEIGHT,19*this.ELEMENT_HEIGHT), 2*this.ELEMENT_WIDTH,2*this.ELEMENT_HEIGHT));
+        this.animalRect.add(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+MathUtils.random(0,
+                this.ROAD_WIDTH-this.animals.get(this.animalIndex).getWidth()), MathUtils.random(18*this.ELEMENT_HEIGHT,
+                19*this.ELEMENT_HEIGHT), this.animals.get(this.animalIndex).getWidth(),
+                this.animals.get(this.animalIndex).getHeight()));
     }
 
     private void loadTrees() {

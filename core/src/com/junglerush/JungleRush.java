@@ -29,7 +29,7 @@ public class JungleRush extends Game {
 		//bold font
 		generator = new FreeTypeFontGenerator(Gdx.files.internal("Fonts/robotoMonoBold.ttf"));
 		parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-		parameter.size = 22;
+		parameter.size = 20;
 		fontBold = generator.generateFont(parameter);
 
 
