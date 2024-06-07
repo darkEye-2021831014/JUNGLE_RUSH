@@ -1,21 +1,29 @@
 package com.junglerush;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
-
-import java.awt.*;
+import com.badlogic.gdx.math.Rectangle;
 
 public class Enemy {
     private Rectangle rectangle;
     private final Array<Texture> textures;
     private float speed;
     private long score;
-    private int scoreFactor,currentIndex;
+    private int scoreFactor,Index;
+    private final Score text;
+    private int isPositive;
 
-    public Enemy(float speed,int scoreFactor){
+    public Enemy(float speed,int scoreFactor, Score text,int isPositive){
+        this.text = text;
         this.textures = new Array<>();
+        this.rectangle = new Rectangle();
         this.speed = speed;
         this.scoreFactor = scoreFactor;
+        this.isPositive =isPositive;
     }
 
 
@@ -23,9 +31,47 @@ public class Enemy {
         this.textures.add(texture);
     }
 
+    public void spawnEnemy(float x, float y, int scoreFactorLower, int scoreFactorUpper)
+    {
+        this.rectangle.x = x;
+        this.rectangle.y = y;
+        this.rectangle.width = getTexture().getWidth();
+        this.rectangle.height = getTexture().getHeight();
+        //set score
+        text.setRectangle(this.rectangle);
+        setScore(scoreFactorLower,scoreFactorUpper);
+    }
+
+    public Texture getTexture(){
+        return this.textures.get(this.Index);
+    }
+
+    public void draw(SpriteBatch batch){
+        batch.draw(getTexture(),rectangle.x,rectangle.y,rectangle.width,rectangle.height);
+        //draw score
+        text.setRectangle(this.rectangle);
+        text.draw(batch,Long.toString(this.score));
+    }
+
+    public void update(){
+        rectangle.y -= speed;
+    }
+
+    public void setTextColor(Color color){
+        text.setColor(color);
+    }
+
+
+
+
 
 
     //setters
+
+    public void setIsPositive(int isPositive) {
+        this.isPositive =isPositive;
+    }
+
     public void setRectangle(Rectangle rectangle) {
         this.rectangle = rectangle;
     }
@@ -34,16 +80,17 @@ public class Enemy {
         this.speed = speed;
     }
 
-    public void setScore(long score) {
-        this.score = score;
+    public void setScore(int scoreFactorLower, int scoreFactorUpper) {
+        setScoreFactor(MathUtils.random(scoreFactorLower,scoreFactorUpper));
+        this.score = isPositive * (1L << this.scoreFactor);
     }
 
     public void setScoreFactor(int scoreFactor) {
         this.scoreFactor = scoreFactor;
     }
 
-    public void setCurrentIndex(int currentIndex) {
-        this.currentIndex = currentIndex;
+    public void setIndex() {
+        this.Index = MathUtils.random(0,this.textures.size-1);
     }
 
     //getters
@@ -60,14 +107,15 @@ public class Enemy {
     }
 
     public long getScore() {
-        return score;
+        this.score = 1L << scoreFactor;
+        return this.score;
     }
 
     public int getScoreFactor() {
         return scoreFactor;
     }
 
-    public int getCurrentIndex() {
-        return currentIndex;
+    public int getIndex() {
+        return Index;
     }
 }

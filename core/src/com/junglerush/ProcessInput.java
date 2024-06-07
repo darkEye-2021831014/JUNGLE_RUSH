@@ -5,10 +5,10 @@ import com.badlogic.gdx.InputProcessor;
 
 public class ProcessInput implements InputProcessor {
 
-    private final GameScreen gameScreen;
+    private final Player player;
 
-    public ProcessInput(GameScreen gameScreen) {
-        this.gameScreen = gameScreen;
+    public ProcessInput(Player player) {
+        this.player = player;
     }
 
     private void setKeyValues(int keyCode, boolean value)
@@ -17,19 +17,19 @@ public class ProcessInput implements InputProcessor {
         {
             case Input.Keys.LEFT:
             case Input.Keys.A:
-                this.gameScreen.setLeftMove(value);
+                this.player.setLeftMove(value);
                 break;
             case Input.Keys.RIGHT:
             case Input.Keys.D:
-                this.gameScreen.setRightMove(value);
+                this.player.setRightMove(value);
                 break;
             case Input.Keys.UP:
             case Input.Keys.W:
-                this.gameScreen.setUpMove(value);
+                this.player.setUpMove(value);
                 break;
             case Input.Keys.DOWN:
             case Input.Keys.S:
-                this.gameScreen.setDownMove(value);
+                this.player.setDownMove(value);
                 break;
         }
     }
