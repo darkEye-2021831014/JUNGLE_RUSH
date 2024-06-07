@@ -2,13 +2,16 @@ package com.junglerush;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.scenes.scene2d.ui.List;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import org.w3c.dom.css.Rect;
@@ -29,18 +32,27 @@ public class GameScreen implements Screen {
     private Rectangle riverRect,mcRect,enemyRect,currentAnimalRect;
 
     private final int TOTAL_TILES = 20,treeRandomFactor = 6;
-    private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,BOARDER_WIDTH;
+    private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,
+            BOARDER_WIDTH,indicator;
     private int SPEED = 5,animalIndex,enemyIndex,animalSpeed=3,enemySpeed=2,mcScoreFactor,enemyScoreFactor,animalScoreFactor,isPositiveAnimal;
     private long enemyScore,animalScore;
     private BigInteger mcScore;
     private boolean leftMove = false,rightMove = false,upMove = false,downMove = false,GAME_OVER = false;
     private TreeSet<BigInteger> scoreTree;
+    private ShapeRenderer shapeRenderer;
+//    private BlinkingLight redLight,greenLight;
+    private Array<Particle> particlesLeft,particlesRight;
+    private final int totalParticle = 1000;
+    private float centerLeftX,centerLeftY,centerRightX,centerRightY;
+//    private final Enemy enemyCar;
 
     public GameScreen(final JungleRush game,final MainMenuScreen menu)
     {
         this.game = game;
         this.menu = menu;
+//        enemyCar = new Enemy(2,MathUtils.random(0,3));
         tRoad = new Texture("Background/Road.jpeg");
+        shapeRenderer = new ShapeRenderer();
 
         initializeBackground();
 
@@ -50,14 +62,35 @@ public class GameScreen implements Screen {
     private void initializeBackground() {
         initializeVariables();
         //load all available trees
+
+
         loadTrees();
         loadBackground();
         loadAnimals();
         loadEnemies();
         loadCars();
         initializeRectangles();
+        setIndicatorsCenterY();
+        loadParticles(particlesLeft,this.centerLeftX,this.centerLeftY); //for left indicator
+        loadParticles(particlesRight,this.centerRightX,this.centerRightY); //for right indicator
+        setIndicator();
 
 
+    }
+
+    private void setIndicator() {
+        // return -1 (first one is smaller than the second), 1 (first one is greater than second), 0 (both equal)
+        indicator = Integer.compare(calculateMcScoreFactor(), this.enemyScoreFactor);
+    }
+
+    private void loadParticles(Array<Particle> particles,float centerX,float centerY) {
+        int maxRadius = 16,minSpeed = 50;
+        for (int i = 0; i < totalParticle; i++) {
+            float initialRadius = (float) (Math.random() * maxRadius); // Adjust max radius
+            float initialAngle = (float) (Math.random() * 360);
+            float speed = (float) (Math.random() * 50 + minSpeed); // Adjust speed range
+            particles.add(new Particle(centerX,centerY,initialRadius, initialAngle, speed));
+        }
     }
 
     private void loadEnemies() {
@@ -96,7 +129,22 @@ public class GameScreen implements Screen {
         drawScoreTree();
         game.batch.end();
 
+        this.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        drawParticles(this.particlesLeft,0.7f);
+        drawParticles(this.particlesRight,0.7f);
+        this.shapeRenderer.end();
+
         update();
+    }
+
+    private void drawParticles(Array<Particle> particles,float radius) {
+        Color color;
+        if(this.indicator < 0) color =Color.RED;
+        else if(this.indicator > 0) color =Color.GREEN;
+        else color = Color.BLACK;
+
+        for(Particle particle:particles)
+            particle.draw(this.shapeRenderer,color,radius);
     }
 
     private void drawScoreTree() {
@@ -160,8 +208,31 @@ public class GameScreen implements Screen {
         //detect collision
         detectCollision();
 
+        //update lights
+        updateParticles(this.particlesLeft,true);
+        updateParticles(this.particlesRight,false);
 
 
+
+    }
+
+    private void updateParticles(Array<Particle> particles, boolean isLeft) {
+        float centerX,centerY;
+        if(isLeft) {
+            this.centerLeftY -= this.enemySpeed;
+            centerY =this.centerLeftY;
+            centerX = this.centerLeftX;
+        }
+        else {
+            this.centerRightY -= this.enemySpeed;
+            centerX = this.centerRightX;
+            centerY = this.centerRightY;
+        }
+
+        float deltaTime = Gdx.graphics.getDeltaTime();
+        for (Particle particle : particles) {
+            particle.update(deltaTime, centerX,centerY);
+        }
     }
 
     private void detectCollision() {
@@ -202,11 +273,19 @@ public class GameScreen implements Screen {
         enemyRect.height = this.enemies.get(this.enemyIndex).getHeight();
         //set enemy score
         setEnemyScore(Math.max(0,this.mcScoreFactor-3),Math.min(62,this.mcScoreFactor+5));
+        //reset light effect
+        setIndicatorsCenterY();
+        setIndicator();
+    }
+
+    private void setIndicatorsCenterY() {
+        this.centerLeftY = this.enemyRect.y+this.enemyRect.height/2;
+        this.centerRightY = this.centerLeftY;
     }
 
     private int calculateMcScoreFactor() {
         String highest = Long.toString((1L << 63)-1L);
-        int result = this.mcScore.toString().compareTo(highest); // result = - 1 ( str1 is less than str 2), 0 ( both str are equal),
+        int result = this.mcScore.compareTo(new BigInteger(highest)); // result = - 1 ( str1 is less than str 2), 0 ( both str are equal),
         // 1 (st1 is greater than str2)
         if(result <= 0)
         {
@@ -436,6 +515,12 @@ public class GameScreen implements Screen {
         this.JUNGLE_WIDTH = this.JUNGLE_FACTOR * this.ELEMENT_WIDTH;
         this.ROAD_WIDTH = this.JUNGLE_WIDTH;
 
+        //initialize indicators
+        particlesLeft = new Array<>();
+        particlesRight = new Array<>();
+        this.centerLeftX = this.JUNGLE_WIDTH+this.BOARDER_WIDTH/2f;
+        this.centerRightX = this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH + this.BOARDER_WIDTH/2f;
+
         //
         scoreTree = new TreeSet<>();
         this.mcScore = new BigInteger("0");
@@ -478,6 +563,9 @@ public class GameScreen implements Screen {
         enemyRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH + MathUtils.random(0,
                 this.ROAD_WIDTH-this.enemies.get(this.enemyIndex).getWidth()), 20*this.ELEMENT_HEIGHT,
                 this.enemies.get(this.enemyIndex).getWidth(),this.enemies.get(this.enemyIndex).getHeight() );
+        //set indicator y in the same horizontal line as the enemy
+        setIndicatorsCenterY();
+
 
         //main character control rectangle
         mcRect = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH+(this.ROAD_WIDTH-tMainCharacter.getWidth())/2,
