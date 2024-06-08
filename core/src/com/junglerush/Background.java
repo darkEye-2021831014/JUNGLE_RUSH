@@ -78,6 +78,10 @@ public class Background {
         }
 
         //update roads
+    }
+
+    public void updateRoads(int screenWidth, int screenHeight,int speed)
+    {
         for(int i=0; i < this.roadRect.size;i++)
         {
             this.roadRect.get(i).y -= speed;

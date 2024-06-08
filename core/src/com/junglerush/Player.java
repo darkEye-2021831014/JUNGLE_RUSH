@@ -92,7 +92,6 @@ public class Player {
     }
 
     public void update(Enemy enemyCar,Background background) {
-        Gdx.input.setInputProcessor(new ProcessInput(this));
         if(this.leftMove) this.rectangle.x -= this.speed;
         if(this.rightMove) this.rectangle.x += this.speed;
 

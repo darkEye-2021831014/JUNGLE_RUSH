@@ -6,9 +6,11 @@ import com.badlogic.gdx.InputProcessor;
 public class ProcessInput implements InputProcessor {
 
     private final Player player;
+    private final GameScreen gameScreen;
 
-    public ProcessInput(Player player) {
+    public ProcessInput(Player player,GameScreen gameScreen) {
         this.player = player;
+        this.gameScreen = gameScreen;
     }
 
     private void setKeyValues(int keyCode, boolean value)
@@ -37,12 +39,48 @@ public class ProcessInput implements InputProcessor {
     @Override
     public boolean keyDown(int keyCode) {
         this.setKeyValues(keyCode, true);
+        switch (keyCode)
+        {
+            case Input.Keys.SPACE:
+                if(!gameScreen.isOnHold()) {
+                    gameScreen.setPaused(!gameScreen.isPaused());
+                    if(gameScreen.isPaused()) {
+                        gameScreen.getRoadSound().pause();
+
+                        gameScreen.getPauseSound().stop();
+                        gameScreen.getResumeSound().stop();
+                        gameScreen.getPauseSound().play();
+                    }
+                    else {
+                        gameScreen.getRoadSound().resume();
+
+                        gameScreen.getPauseSound().stop();
+                        gameScreen.getResumeSound().stop();
+                        gameScreen.getResumeSound().play();
+                    }
+                }
+                break;
+            case Input.Keys.UP:
+            case Input.Keys.W:
+                if(!gameScreen.isOnHold() && !gameScreen.isPaused() && !gameScreen.isGameOver()) {
+                    gameScreen.getCarSpeedUpSound().stop();
+                    gameScreen.getCarSpeedUpSound().play();
+                }
+                break;
+        }
         return true;
     }
 
     @Override
     public boolean keyUp(int keyCode) {
         this.setKeyValues(keyCode, false);
+        switch (keyCode)
+        {
+            case Input.Keys.UP:
+            case Input.Keys.W:
+//                gameScreen.getCarSpeedUpSound().pause();
+                break;
+        }
         return true;
     }
 

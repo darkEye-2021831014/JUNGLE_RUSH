@@ -2,6 +2,9 @@ package com.junglerush;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -10,30 +13,20 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 
-import java.math.BigInteger;
-import java.util.TreeSet;
 
 public class GameScreen implements Screen {
 
     private final JungleRush game;
-    private Texture tRoad,tRiver,tMainCharacter;
-    private Array<Texture> trees,backgrounds,animals,enemies;
-    private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect,roadBoarder,animalRect;
-    private Rectangle riverRect,mcRect,enemyRect,currentAnimalRect;
 
-    private final int TOTAL_TILES = 20,treeRandomFactor = 6;
-    private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,ROAD_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,
+    private final int TOTAL_TILES = 20;
+    private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,
             BOARDER_WIDTH;
-    private int SPEED = 5,animalIndex,enemyIndex,animalSpeed=3,enemySpeed=2,mcScoreFactor,enemyScoreFactor,animalScoreFactor,isPositiveAnimal;
-    private long enemyScore,animalScore;
-    private BigInteger mcScore;
-    private boolean leftMove = false,rightMove = false,upMove = false,downMove = false,GAME_OVER = false;
-    private TreeSet<BigInteger> scoreTree;
+    private boolean isPaused = true,onHold = true,gameOver = false;
+    private float elapsedTime = 0;
+    private int totalCount = 3;
+    private Rectangle centerRectangle;
+
     private ShapeRenderer shapeRenderer;
-//    private BlinkingLight redLight,greenLight;
-    private Array<Particle> particlesLeft,particlesRight;
-    private final int totalParticle = 1000;
-    private float centerLeftX,centerLeftY,centerRightX,centerRightY;
     private final Player player;
     private final Enemy enemyCar,enemyAnimal;
     private final Score enemyScoreText,playerScoreText,enemyAnimalScoreText;
@@ -41,6 +34,9 @@ public class GameScreen implements Screen {
     private final Trees forest;
     private final Indicator indicatorCarLeft,indicatorCarRight,indicatorAnimal;
     private final Collision collision;
+    private Sound countdownSound,carStartingSound,roadSound,boarderCollisionSound,carSpeedUpSound,pauseSound,resumeSound,
+            collisionWithStrongCar,collisionWithStrongAnimal,collisionWithGreenAnimal,animalCollisionGameOver;
+    private Array<Sound> soundArray;
 
     public GameScreen(final JungleRush game)
     {
@@ -66,7 +62,13 @@ public class GameScreen implements Screen {
 
         initializeBackground();
 
+        startPlayingSounds();
+    }
 
+    private void startPlayingSounds() {
+        countdownSound.play();
+        carStartingSound.play();
+        roadSound.loop();
     }
 
     private void initializeBackground() {
@@ -80,7 +82,28 @@ public class GameScreen implements Screen {
         loadPlayer();
         loadCarIndicator();
         loadAnimalIndicator();
+        loadSounds();
 
+
+    }
+
+    private void loadSounds() {
+        soundArray = new Array<>();
+        countdownSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/gameCountdown.wav"));
+        carStartingSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/carStarting1.mp3"));
+        roadSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/roadAmbience1.mp3"));
+        boarderCollisionSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/fallingInWater.wav"));
+        carSpeedUpSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/carSpeedUp.wav"));
+        pauseSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/pauseGame.wav"));
+        resumeSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/resumeGame.wav"));
+        collisionWithStrongCar = Gdx.audio.newSound(Gdx.files.internal("Sounds/dashingWithCar3.wav"));
+        collisionWithStrongAnimal = Gdx.audio.newSound(Gdx.files.internal("Sounds/dashingWithAnimal1.wav"));
+        collisionWithGreenAnimal = Gdx.audio.newSound(Gdx.files.internal("Sounds/collisionWithGreenAnimal.wav"));
+        animalCollisionGameOver = Gdx.audio.newSound(Gdx.files.internal("Sounds/dashingWithAnimal4.mp3"));
+
+        soundArray.add(countdownSound);
+        soundArray.add(carStartingSound);
+        soundArray.add(roadSound);
 
     }
 
@@ -111,8 +134,7 @@ public class GameScreen implements Screen {
 
     }
 
-    private void loadParticles(Indicator indicator)
-    {
+    private void loadParticles(Indicator indicator) {
         int maxRadius = 16,minSpeed = 50;
         for (int i = 0; i < indicatorCarLeft.getTotalParticles(); i++) {
             float initialRadius = (float) (Math.random() * maxRadius); // Adjust max radius
@@ -122,8 +144,7 @@ public class GameScreen implements Screen {
         }
     }
 
-    private void loadBackground()
-    {
+    private void loadBackground() {
         int totalBg = 2;
         for(int i=0;i < totalBg;i++)
             background.addTexture(new Texture("Background/water.bmp"));
@@ -147,8 +168,7 @@ public class GameScreen implements Screen {
         background.addRoadRectangle(new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH, game.SCREEN_HEIGHT, this.ROAD_WIDTH, game.SCREEN_HEIGHT));
     }
 
-    private void loadTrees()
-    {
+    private void loadTrees() {
         for(int i =1; i <= 123; i++)
             forest.addTexture(new Texture("Trees/jungleTree"+i+".png"));
 
@@ -180,8 +200,7 @@ public class GameScreen implements Screen {
         spawnEnemyCar();
     }
 
-    public void spawnEnemyCar()
-    {
+    public void spawnEnemyCar() {
         enemyCar.setIndex();
         enemyCar.spawnEnemy(this.JUNGLE_WIDTH+this.BOARDER_WIDTH +
                         MathUtils.random(0, this.ROAD_WIDTH-enemyCar.getTexture().getWidth()), 20*this.ELEMENT_HEIGHT,
@@ -216,35 +235,81 @@ public class GameScreen implements Screen {
 
     @Override
     public void render(float v) {
-        ScreenUtils.clear(0, 0, 0.3f, 1);
+        if(!gameOver) {
+            Gdx.input.setInputProcessor(new ProcessInput(player, this));
+            ScreenUtils.clear(0, 0, 0.3f, 1);
 
-        game.batch.begin();
-        background.drawBackground(game.batch);
-        enemyAnimal.draw(game.batch);
-        enemyCar.draw(game.batch);
-        forest.draw(game.batch);
-        player.draw(game.batch,game.SCREEN_WIDTH,game.SCREEN_HEIGHT,background);
-        game.batch.end();
+            game.batch.begin();
+            background.drawBackground(game.batch);
+            enemyAnimal.draw(game.batch);
+            enemyCar.draw(game.batch);
+            forest.draw(game.batch);
+            player.draw(game.batch, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, background);
+            game.batch.end();
 
-        this.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        indicatorCarLeft.draw(shapeRenderer,0.7f);
-        indicatorCarRight.draw(shapeRenderer,0.7f);
-        indicatorAnimal.draw(shapeRenderer,0.5f);
-        this.shapeRenderer.end();
+            this.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            indicatorCarLeft.draw(shapeRenderer, 0.7f);
+            indicatorCarRight.draw(shapeRenderer, 0.7f);
+            indicatorAnimal.draw(shapeRenderer, 0.5f);
+            this.shapeRenderer.end();
 
-        update();
+            game.batch.begin();
+            PauseResume();
+            game.batch.end();
+        }
     }
 
+    private void PauseResume() {
+        updateAlways();
+        if(onHold)
+            countDown();
+        else {
+            if (isPaused) {
+                playerScoreText.blinkingEffect(0.04f,0.03f,0.3f);
+                playerScoreText.setRectangle(centerRectangle);
+                playerScoreText.setColor(new Color(playerScoreText.getOpacity(), 1, 1, playerScoreText.getOpacity()));
+                playerScoreText.draw(game.batch, "Press Space To Resume");
+            } else {
+                update();
+            }
+        }
+    }
+
+    private void updateAlways() {
+        background.update(game.SCREEN_WIDTH,game.SCREEN_HEIGHT,player.getSpeed());
+        updateAnimalIndicator();
+        updateCarIndicator();
+    }
+
+    private void countDown() {
+        playerScoreText.setRectangle(this.centerRectangle);
+        playerScoreText.setColor(new Color(0,1,1,1));
+        if(totalCount <= 0) {
+            if(totalCount == 0)
+                playerScoreText.draw(game.batch,"Go!");
+            else
+            {
+                setOnHold(false);
+                setPaused(false);
+            }
+        }
+        else
+            playerScoreText.draw(game.batch,"Getting Started In\n        "+totalCount);
+
+        elapsedTime += Gdx.graphics.getDeltaTime();
+        if(elapsedTime >= 1f) {
+            elapsedTime = 0;
+            totalCount--;
+        }
+    }
 
 
     private void update()
     {
+        forest.update(player.getSpeed(),50);
+        background.updateRoads(game.SCREEN_WIDTH,game.SCREEN_HEIGHT,player.getSpeed());
         updateEnemyCar();
         updatePlayer();
-        forest.update(player.getSpeed(),50);
-        background.update(game.SCREEN_WIDTH,game.SCREEN_HEIGHT,player.getSpeed());
-        updateCarIndicator();
-        updateAnimalIndicator();
         updateEnemyAnimal();
 
         collision.update();
@@ -259,8 +324,8 @@ public class GameScreen implements Screen {
     }
 
     private void updateCarIndicator() {
-        indicatorCarLeft.updateCenterY(enemyCar.getSpeed());
-        indicatorCarRight.updateCenterY(enemyCar.getSpeed());
+        indicatorCarLeft.updateCenterY(enemyCar.getSpeed(),enemyCar);
+        indicatorCarRight.updateCenterY(enemyCar.getSpeed(),enemyCar);
         indicatorCarLeft.update();
         indicatorCarRight.update();
 
@@ -305,9 +370,7 @@ public class GameScreen implements Screen {
 
 
 
-    private int checkDirection(int value)
-    {
-
+    private int checkDirection(int value) {
         // i= 0(left to right), 1 ( right to left), 2 (static)
         int i = 0;
         if(value >= 8 && value < 15) i = 1;
@@ -315,8 +378,7 @@ public class GameScreen implements Screen {
         return i;
     }
 
-    private void setAnimalIndicatorCenter()
-    {
+    private void setAnimalIndicatorCenter() {
         indicatorAnimal.setCenterX(enemyAnimal.getRectangle().x+ enemyAnimal.getRectangle().width/2);
         indicatorAnimal.setCenterY(enemyAnimal.getRectangle().y+enemyAnimal.getRectangle().height/2);
     }
@@ -355,14 +417,7 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
-        for(Texture t : trees)
-            t.dispose();
     }
-
-
-
-
-
 
 
 
@@ -371,18 +426,79 @@ public class GameScreen implements Screen {
         this.ELEMENT_WIDTH = game.SCREEN_WIDTH/this.TOTAL_TILES;
         this.ELEMENT_HEIGHT = game.SCREEN_HEIGHT/this.TOTAL_TILES;
         this.JUNGLE_FACTOR = 6;
-        this.ROAD_FACTOR = this.JUNGLE_FACTOR;
         this.RIVER_FACTOR = 1;
         this.BOARDER_WIDTH = (int)(0.5 * this.ELEMENT_WIDTH);
         this.JUNGLE_WIDTH = this.JUNGLE_FACTOR * this.ELEMENT_WIDTH;
         this.ROAD_WIDTH = this.JUNGLE_WIDTH;
 
-        //initialize indicators
-        particlesLeft = new Array<>();
-        particlesRight = new Array<>();
-        this.centerLeftX = this.JUNGLE_WIDTH+this.BOARDER_WIDTH/2f;
-        this.centerRightX = this.JUNGLE_WIDTH+this.BOARDER_WIDTH+this.ROAD_WIDTH + this.BOARDER_WIDTH/2f;
+        //center rectangle to show text
+        centerRectangle = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,300,ROAD_WIDTH,game.SCREEN_HEIGHT-300);
     }
 
 
+
+    //getters & setters
+    public void setPaused(boolean paused) {
+        isPaused = paused;
+    }
+
+    public boolean isPaused() {
+        return isPaused;
+    }
+
+    public boolean isOnHold() {
+        return onHold;
+    }
+
+    public void setOnHold(boolean onHold) {
+        this.onHold = onHold;
+    }
+
+    public Array<Sound> getSoundArray() {
+        return soundArray;
+    }
+
+    public Sound getRoadSound() {
+        return roadSound;
+    }
+
+    public Sound getBoarderCollisionSound() {
+        return boarderCollisionSound;
+    }
+
+    public Sound getCarSpeedUpSound() {
+        return carSpeedUpSound;
+    }
+
+    public Sound getPauseSound() {
+        return pauseSound;
+    }
+
+    public Sound getResumeSound() {
+        return resumeSound;
+    }
+
+    public Sound getCollisionWithStrongCar() {
+        return collisionWithStrongCar;
+    }
+
+    public void setGameOver(boolean gameOver) {
+        this.gameOver = gameOver;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public Sound getCollisionWithStrongAnimal() {
+        return collisionWithStrongAnimal;
+    }
+
+    public Sound getCollisionWithGreenAnimal() {
+        return collisionWithGreenAnimal;
+    }
+
+    public Sound getAnimalCollisionGameOver() {
+        return animalCollisionGameOver;
+    }
 }

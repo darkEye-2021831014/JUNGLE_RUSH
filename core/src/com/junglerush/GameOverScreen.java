@@ -3,6 +3,7 @@ package com.junglerush;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
@@ -10,16 +11,15 @@ import com.badlogic.gdx.utils.ScreenUtils;
 
 public class GameOverScreen implements Screen {
     private final Player player;
-    private final Background background;
+    private final GameScreen gameScreen;
     private final JungleRush game;
     private final Score gameOverText;
     private Rectangle gameOverRectangle,scoreTreeRect;
 
-    public GameOverScreen(Player player, JungleRush game, Background background) {
-        System.out.println("foo");
+    public GameOverScreen(Player player, JungleRush game, GameScreen gameScreen) {
         this.player = player;
         this.game = game;
-        this.background = background;
+        this.gameScreen = gameScreen;
         gameOverText = new Score("Fonts/robotoMonoRegular.ttf",32,1);
         int rectWidth = 800,rectHeight = 500;
 
@@ -38,7 +38,7 @@ public class GameOverScreen implements Screen {
         gameOverText.draw(game.batch,"Tap Anywhere or Press Space To Restart");
         player.drawScoreTree(game.batch,scoreTreeRect,Color.WHITE);
         gameOverText.setRectangle(new Rectangle((game.SCREEN_WIDTH-600)/2f, game.SCREEN_HEIGHT - 400,600,400 ));
-        gameOverText.draw(game.batch,"       Game Over\nHighest Score Achieved: "+player.getMaxScore());
+        gameOverText.draw(game.batch,"        Game Over\nHighest Score Achieved: "+player.getMaxScore());
         game.batch.end();
 
         update();
