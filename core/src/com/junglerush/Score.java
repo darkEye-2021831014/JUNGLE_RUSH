@@ -15,10 +15,12 @@ public class Score {
     private final int fontSize;
     private Rectangle rectangle;
     private final String filePath;
+    private float fontScale;
 
-    public Score(String filePath, int fontSize){
+    public Score(String filePath, int fontSize,float fontScale){
         this.filePath =filePath;
         this.fontSize = fontSize;
+        this.fontScale = fontScale;
         font = new BitmapFont();
         rectangle = new Rectangle();
         increase = true;
@@ -32,6 +34,7 @@ public class Score {
         FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
         parameter.size = this.fontSize;
         font = generator.generateFont(parameter);
+        setFontScale(this.fontScale);
     }
 
     public void setOpacity(float opacity) {
@@ -48,7 +51,15 @@ public class Score {
     }
 
     public void draw(Batch batch,String text){
-        GlyphLayout g1 = new GlyphLayout(font, text);
+        setFontScale(this.fontScale) ;
+        GlyphLayout g1 = new GlyphLayout();
+        g1.setText(font,text);
+        if((g1.width+g1.width/4) > rectangle.width)
+        {
+            float scale = rectangle.width/(g1.width+g1.width/4);
+            font.getData().setScale(scale);
+            g1.setText(font,text);
+        }
         float textX = rectangle.x+ ( rectangle.width- g1.width)/2f;
         float textY = rectangle.y + (rectangle.height+g1.height)/2f;
         font.draw(batch,g1,textX,textY);
@@ -62,7 +73,24 @@ public class Score {
         this.rectangle = rectangle;
     }
 
+    public void setFontScale(float fontScale){
+        this.fontScale = fontScale;
+        font.getData().setScale(this.fontScale);
+    }
+
     public float getOpacity() {
         return opacity;
+    }
+
+    public Rectangle getRectangle() {
+        return rectangle;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public float getFontScale() {
+        return fontScale;
     }
 }

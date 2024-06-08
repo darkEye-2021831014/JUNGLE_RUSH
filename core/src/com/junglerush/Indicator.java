@@ -10,21 +10,17 @@ import com.badlogic.gdx.utils.Array;
 import java.math.BigInteger;
 
 public class Indicator {
-    private Array<Particle> particlesLeft,particlesRight;
+    private Array<Particle> particles;
     private int indicator,totalParticles;
-    private float centerLeftX,centerLeftY,centerRightX,centerRightY;
+    private float centerX,centerY;
     public Indicator(int totalParticles, BigInteger playerScore, BigInteger enemyScore){
-        particlesLeft = new Array<>();
-        particlesRight = new Array<>();
+        particles = new Array<>();
         this.totalParticles = totalParticles;
         setIndicator(playerScore,enemyScore);
     }
 
-    public void addParticleLeft(Particle particle){
-        particlesLeft.add(particle);
-    }
-    public void addParticleRight(Particle particle){
-        particlesRight.add(particle);
+    public void addParticle(Particle particle){
+        particles.add(particle);
     }
 
     public void setIndicator(BigInteger playerScore, BigInteger enemyScore){
@@ -32,40 +28,43 @@ public class Indicator {
         this.indicator = playerScore.compareTo(enemyScore);
     }
 
-    public void setCenterX(float centerLeftX,float centerRightX)
+    public void setIndicator(int indicator)
     {
-        this.centerLeftX = centerLeftX;
-        this.centerRightX = centerRightX;
+        this.indicator = indicator;
+    }
+
+    public void setCenterX(float centerX)
+    {
+        this.centerX = centerX;
     }
 
     public void setCenterY(float centerY){
-        this.centerLeftY = centerY;
-        this.centerRightY = this.centerLeftY;
+        this.centerY = centerY;
     }
 
 
 
-    public void draw(ShapeRenderer shapeRenderer){
+    public void draw(ShapeRenderer shapeRenderer,float radius){
         Color color;
         if(this.indicator < 0) color =Color.RED;
         else if(this.indicator > 0) color =Color.GREEN;
         else color = Color.BLACK;
 
         for(int i=0; i < totalParticles; i++) {
-            particlesLeft.get(i).draw(shapeRenderer, color, (float) 0.7);
-            particlesRight.get(i).draw(shapeRenderer, color, (float) 0.7);
+            particles.get(i).draw(shapeRenderer, color, radius);
         }
     }
 
-    public void update(float enemySpeed)
+    public void updateCenterY(float enemySpeed)
     {
-        this.centerLeftY -= enemySpeed;
-        this.centerRightY -= enemySpeed;
+        this.centerY -= enemySpeed;
+    }
 
+    public void update()
+    {
         float deltaTime = Gdx.graphics.getDeltaTime();
         for (int i=0; i < totalParticles; i++) {
-            particlesLeft.get(i).update(deltaTime, centerLeftX,centerLeftY);
-            particlesRight.get(i).update(deltaTime, centerRightX,centerRightY);
+            particles.get(i).update(deltaTime, centerX,centerY);
         }
     }
 
@@ -77,31 +76,20 @@ public class Indicator {
         return totalParticles;
     }
 
-    public Array<Particle> getParticlesLeft() {
-        return particlesLeft;
-    }
-
-    public Array<Particle> getParticlesRight() {
-        return particlesRight;
-    }
-
     public int getIndicator() {
         return indicator;
     }
 
-    public float getCenterLeftX() {
-        return centerLeftX;
+    public Array<Particle> getParticles() {
+        return particles;
     }
 
-    public float getCenterLeftY() {
-        return centerLeftY;
+    public float getCenterX() {
+        return centerX;
     }
 
-    public float getCenterRightX() {
-        return centerRightX;
+    public float getCenterY() {
+        return centerY;
     }
 
-    public float getCenterRightY() {
-        return centerRightY;
-    }
 }

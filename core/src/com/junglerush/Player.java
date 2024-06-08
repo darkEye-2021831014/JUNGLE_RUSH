@@ -5,13 +5,14 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
+import org.w3c.dom.css.Rect;
 
 import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.TreeSet;
 
 public class Player {
-    private BigInteger score;
+    private BigInteger score,maxScore;
     private int scoreFactor;
     private final Texture texture;
     private final Rectangle rectangle;
@@ -19,15 +20,18 @@ public class Player {
     private final Score text;
     private TreeSet<BigInteger> scoreTree;
     private boolean leftMove,rightMove,upMove,downMove;
+    private long maxAllowed;
 
-    public Player(Score text, int speed, int scoreFactor, String filePath) {
+    public Player(Score text, int speed, int scoreFactor, String filePath,long maxAllowed) {
         this.text = text;
         this.speed = speed;
         this.scoreFactor = scoreFactor;
         this.rectangle = new Rectangle();
         this.texture = new Texture(filePath);
+        this.maxAllowed = maxAllowed;
         scoreTree =new TreeSet<>();
-        setScore(this.scoreFactor);
+        this.score = Enemy.power2(this.scoreFactor);
+        setScore(this.score,false);
     }
 
     public void spawnPlayer(float x, float y, float width, float height)
@@ -38,7 +42,6 @@ public class Player {
         this.rectangle.height = height;
 
         text.setRectangle(this.rectangle);
-        setScore(this.scoreFactor);
     }
 
     public Texture getTexture()
@@ -49,25 +52,42 @@ public class Player {
     public void draw(SpriteBatch batch,int screenWidth,int screenHeight,Background background) {
         batch.draw(texture, rectangle.x, rectangle.y,rectangle.width, rectangle.height);
         text.setRectangle(this.rectangle);
-        text.draw(batch,this.score.toString());
+        BigInteger maxValue = BigInteger.valueOf(maxAllowed);
+        String curScore = this.score.toString();
+        //transform to have suffix
+        if(this.score.compareTo(maxValue) >= 0)
+            curScore = NumberFormatter.formatBigInteger(this.score);
+        text.draw(batch,curScore);
 
         //draw score tree
-        text.setColor(new Color(text.getOpacity(), 0, 0, text.getOpacity()));
-
-        Iterator<BigInteger> descendingIterator = scoreTree.descendingIterator();
         int scoreHeight = 25;
         Rectangle scoreRect = new Rectangle(screenWidth-background.getRiverRect().width,
                 screenHeight-2*scoreHeight,background.getRiverRect().width,scoreHeight);
+        drawScoreTree(batch,scoreRect,Color.BLACK);
+    }
+
+    public void drawScoreTree(SpriteBatch batch,Rectangle scoreRect,
+                              Color color) {
+        BigInteger maxValue = BigInteger.valueOf(maxAllowed);
+        int scoreHeight = 25;
+        text.setColor(color);
+        Iterator<BigInteger> descendingIterator = scoreTree.descendingIterator();
+
         text.setRectangle(scoreRect);
         text.draw(batch,"Score\nTree");
-        scoreRect.y-=2*scoreHeight;
+        scoreRect.y -= scoreHeight;
+        text.draw(batch,"----------");
+        scoreRect.y-=scoreHeight;
         while (descendingIterator.hasNext())
         {
-            String curScore = descendingIterator.next().toString();
+            BigInteger curValue = descendingIterator.next();
+            String curScore = curValue.toString();
+            if(curValue.compareTo(maxValue) >= 0)
+                curScore = NumberFormatter.formatBigInteger(curValue);
             text.setRectangle(scoreRect);
             text.draw(batch,curScore);
             scoreRect.y-=scoreHeight;
-            if(scoreRect.y <=0)break;
+            if(scoreRect.y <= 0) break;
         }
     }
 
@@ -107,40 +127,51 @@ public class Player {
         text.setColor(color);
     }
 
-    private int setBits(long value)
+    public static int setBits(BigInteger value)
     {
         int sz = 0;
-        while (value != 0L)
+        while (value.compareTo(BigInteger.valueOf(0L)) > 0)
         {
             sz++;
-            value >>= 1L;
+            value = value.divide(BigInteger.valueOf(2L));
         }
         if(sz!=0)sz--;
         return sz;
     }
 
-    public void setScore(int factor)
+    public void setScore(BigInteger curScore,boolean isDivide)
     {
-        BigInteger curScore = BigInteger.valueOf(1L << factor);
+        if(isDivide) {
+            assert this.score != null;
+            curScore = this.score.divide(curScore);
+            scoreTree.remove(this.score);
+        }
+
         while(this.scoreTree.contains(curScore))
         {
             this.scoreTree.remove(curScore);
             curScore = curScore.add(curScore);
         }
-        this.scoreTree.add(curScore);
-        this.score = this.scoreTree.last();
 
-        System.out.println(this.score);
+        if(curScore.compareTo(BigInteger.valueOf(0)) > 0)
+            this.scoreTree.add(curScore);
+        if(this.scoreTree.isEmpty())
+            this.score = BigInteger.valueOf(0);
+        else
+            this.score = this.scoreTree.last();
+        //set maximum score achieved
+        setMaxScore();
+
         //set score factor
-        BigInteger highest = BigInteger.valueOf((1L << 63)-1L);
-        int result = this.score.compareTo(highest); // result = - 1 ( str1 is less than str 2), 0 ( both str are equal),
-        // 1 (st1 is greater than str2)
-        if(result <= 0)
-        {
-            long playerScore = this.score.longValue();
-            this.scoreFactor = setBits(playerScore);
-        }
-        else this.scoreFactor = 62; // maximum allowed
+        assert this.score != null;
+        this.scoreFactor = setBits(this.score);
+    }
+
+    private void setMaxScore() {
+        if(maxScore == null)
+            maxScore = this.score;
+        else
+            maxScore = maxScore.max(score);
     }
 
 
@@ -182,5 +213,9 @@ public class Player {
 
     public TreeSet<BigInteger> getScoreTree() {
         return scoreTree;
+    }
+
+    public BigInteger getMaxScore() {
+        return maxScore;
     }
 }

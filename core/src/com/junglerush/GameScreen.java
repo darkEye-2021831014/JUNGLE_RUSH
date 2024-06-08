@@ -16,7 +16,6 @@ import java.util.TreeSet;
 public class GameScreen implements Screen {
 
     private final JungleRush game;
-    private final MainMenuScreen menu;
     private Texture tRoad,tRiver,tMainCharacter;
     private Array<Texture> trees,backgrounds,animals,enemies;
     private Array<Rectangle> roadRect, treeRectLeft, treeRectRight,backgroundRect,roadBoarder,animalRect;
@@ -37,27 +36,32 @@ public class GameScreen implements Screen {
     private float centerLeftX,centerLeftY,centerRightX,centerRightY;
     private final Player player;
     private final Enemy enemyCar,enemyAnimal;
-    private final Score enemyScoreText,playerScoreText;
+    private final Score enemyScoreText,playerScoreText,enemyAnimalScoreText;
     private final Background background;
     private final Trees forest;
-    private final Indicator indicator;
+    private final Indicator indicatorCarLeft,indicatorCarRight,indicatorAnimal;
+    private final Collision collision;
 
-    public GameScreen(final JungleRush game,final MainMenuScreen menu)
+    public GameScreen(final JungleRush game)
     {
         this.game = game;
-        this.menu = menu;
         this.forest = new Trees();
 
         this.background = new Background();
-        this.playerScoreText = new Score("Fonts/robotoMonoRegular.ttf",20);
-        this.player = new Player(this.playerScoreText,5,1,"Background/mainCar.png");
+        this.playerScoreText = new Score("Fonts/robotoMonoBold.ttf",24,1);
+        this.player = new Player(this.playerScoreText,5,1,"Background/mainCar.png",10000L);
 
-        this.enemyScoreText = new Score("Fonts/robotoMonoRegular.ttf",18);
-        enemyCar = new Enemy(2,MathUtils.random(0,3),this.enemyScoreText,1);
+        this.enemyScoreText = new Score("Fonts/robotoMonoBold.ttf",22,1);
+        enemyCar = new Enemy(2,MathUtils.random(0,3),this.enemyScoreText,false,10000L);
 
-        enemyAnimal = new Enemy(3,MathUtils.random(0,1),this.enemyScoreText,1);
+        this.enemyAnimalScoreText = new Score("Fonts/robotoMonoBold.ttf",22,1);
+        enemyAnimal = new Enemy(3,MathUtils.random(0,1),this.enemyAnimalScoreText,false,1000L);
 
-        indicator = new Indicator(1000,player.getScore(),BigInteger.valueOf(enemyCar.getScore()));
+        indicatorCarLeft = new Indicator(1000,player.getScore(),enemyCar.getScore());
+        indicatorCarRight = new Indicator(1000,player.getScore(),enemyCar.getScore());
+        indicatorAnimal = new Indicator(200,player.getScore(),enemyCar.getScore());
+
+        collision = new Collision(player,background,enemyCar,enemyAnimal,this,game);
         shapeRenderer = new ShapeRenderer();
 
         initializeBackground();
@@ -74,9 +78,16 @@ public class GameScreen implements Screen {
         loadEnemyCars();
         loadEnemyAnimals();
         loadPlayer();
-        loadIndicator();
+        loadCarIndicator();
+        loadAnimalIndicator();
 
 
+    }
+
+    private void loadAnimalIndicator() {
+        setAnimalIndicatorCenter();
+
+        loadParticles(indicatorAnimal);
     }
 
     private void loadEnemyAnimals() {
@@ -88,19 +99,26 @@ public class GameScreen implements Screen {
     }
 
 
-    private void loadIndicator() {
-        indicator.setCenterX(background.getBoarderRect().get(0).x + background.getBoarderRect().get(0).width/2,
-                background.getBoarderRect().get(1).x + background.getBoarderRect().get(1).width/2);
-        indicator.setCenterY(enemyCar.getRectangle().y+enemyCar.getRectangle().height/2);
+    private void loadCarIndicator() {
+        indicatorCarLeft.setCenterX(background.getBoarderRect().get(0).x + background.getBoarderRect().get(0).width/2);
+        indicatorCarRight.setCenterX(background.getBoarderRect().get(1).x + background.getBoarderRect().get(1).width/2);
 
+        indicatorCarLeft.setCenterY(enemyCar.getRectangle().y+enemyCar.getRectangle().height/2);
+        indicatorCarRight.setCenterY(indicatorCarLeft.getCenterY());
 
+        loadParticles(indicatorCarLeft);
+        loadParticles(indicatorCarRight);
+
+    }
+
+    private void loadParticles(Indicator indicator)
+    {
         int maxRadius = 16,minSpeed = 50;
-        for (int i = 0; i < indicator.getTotalParticles(); i++) {
+        for (int i = 0; i < indicatorCarLeft.getTotalParticles(); i++) {
             float initialRadius = (float) (Math.random() * maxRadius); // Adjust max radius
             float initialAngle = (float) (Math.random() * 360);
             float speed = (float) (Math.random() * 50 + minSpeed); // Adjust speed range
-            indicator.addParticleLeft(new Particle(indicator.getCenterLeftX(),indicator.getCenterLeftY(),initialRadius, initialAngle, speed));
-            indicator.addParticleRight(new Particle(indicator.getCenterRightX(),indicator.getCenterRightY(),initialRadius, initialAngle, speed));
+            indicator.addParticle(new Particle(indicator.getCenterX(),indicator.getCenterY(),initialRadius, initialAngle, speed));
         }
     }
 
@@ -162,24 +180,23 @@ public class GameScreen implements Screen {
         spawnEnemyCar();
     }
 
-    private void spawnEnemyCar()
+    public void spawnEnemyCar()
     {
         enemyCar.setIndex();
         enemyCar.spawnEnemy(this.JUNGLE_WIDTH+this.BOARDER_WIDTH +
                         MathUtils.random(0, this.ROAD_WIDTH-enemyCar.getTexture().getWidth()), 20*this.ELEMENT_HEIGHT,
-                        Math.max(0,player.getScoreFactor()-3),Math.min(62,player.getScoreFactor()+3));
-        indicator.setCenterY(enemyCar.getRectangle().y+enemyCar.getRectangle().height/2);
-        indicator.setIndicator(player.getScore(),BigInteger.valueOf(enemyCar.getScore()));
+                        Math.max(0,player.getScoreFactor()-3),player.getScoreFactor()+3);
+        indicatorCarLeft.setCenterY(enemyCar.getRectangle().y+enemyCar.getRectangle().height/2);
+        indicatorCarRight.setCenterY(indicatorCarLeft.getCenterY());
     }
 
-    private void spawnEnemyAnimal() {
+    public void spawnEnemyAnimal() {
         enemyAnimal.setIndex();
-        System.out.println(enemyAnimal.getIndex());
+
         int scoreLowerLimit = Math.max(0,player.getScoreFactor()-5),
-                scoreUpperLimit = Math.min(62, player.getScoreFactor()+1);
+                scoreUpperLimit = player.getScoreFactor()+1;
         int value = MathUtils.random(0,1);
-        if(value==0) enemyAnimal.setIsPositive(1);
-        else enemyAnimal.setIsPositive(-1);
+        enemyAnimal.setDivide(value != 0);
 
         // i= 0(left to right), 1 ( right to left), 2 (static)
         int direction = checkDirection(enemyAnimal.getIndex());
@@ -210,7 +227,9 @@ public class GameScreen implements Screen {
         game.batch.end();
 
         this.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        indicator.draw(shapeRenderer);
+        indicatorCarLeft.draw(shapeRenderer,0.7f);
+        indicatorCarRight.draw(shapeRenderer,0.7f);
+        indicatorAnimal.draw(shapeRenderer,0.5f);
         this.shapeRenderer.end();
 
         update();
@@ -224,16 +243,37 @@ public class GameScreen implements Screen {
         updatePlayer();
         forest.update(player.getSpeed(),50);
         background.update(game.SCREEN_WIDTH,game.SCREEN_HEIGHT,player.getSpeed());
-        indicator.update(enemyCar.getSpeed());
+        updateCarIndicator();
+        updateAnimalIndicator();
         updateEnemyAnimal();
-        detectCollision();
 
+        collision.update();
 
     }
 
+    private void updateAnimalIndicator() {
+        setAnimalIndicatorCenter();
+        if(enemyAnimal.isDivide()) indicatorAnimal.setIndicator(-1);
+        else indicatorAnimal.setIndicator(1);
+        indicatorAnimal.update();
+    }
+
+    private void updateCarIndicator() {
+        indicatorCarLeft.updateCenterY(enemyCar.getSpeed());
+        indicatorCarRight.updateCenterY(enemyCar.getSpeed());
+        indicatorCarLeft.update();
+        indicatorCarRight.update();
+
+        indicatorCarLeft.setIndicator(player.getScore(),enemyCar.getScore());
+        indicatorCarRight.setIndicator(indicatorCarLeft.getIndicator());
+    }
+
     private void updateEnemyAnimal() {
-        int i = 0;// i= 0(left to right), 1 ( right to left), 2 (static)
-        i = checkDirection(enemyAnimal.getIndex());
+        if(enemyAnimal.isDivide())
+            enemyAnimal.setTextColor(Color.RED);
+        else enemyAnimal.setTextColor(Color.GREEN);
+        // i= 0(left to right), 1 ( right to left), 2 (static)
+        int i = checkDirection(enemyAnimal.getIndex());
 
         enemyAnimal.getRectangle().y -= player.getSpeed();
         if(i==0) enemyAnimal.getRectangle().x += enemyAnimal.getSpeed();
@@ -243,7 +283,6 @@ public class GameScreen implements Screen {
                 enemyAnimal.getRectangle().x <= background.getBoarderRect().get(0).x+this.BOARDER_WIDTH ||
                 enemyAnimal.getRectangle().x >= (background.getBoarderRect().get(1).x - (enemyAnimal.getTexture().getWidth())))
         {
-            System.out.println(enemyAnimal.getIndex() + " here");
             spawnEnemyAnimal();
         }
     }
@@ -264,42 +303,22 @@ public class GameScreen implements Screen {
 
 
 
-    private void detectCollision() {
-
-        //detect collision with road boarder
-        for(Rectangle rect: background.getBoarderRect())
-            if(player.getRectangle().overlaps(rect))
-            {
-                this.GAME_OVER = true;
-                return;
-            }
-
-        //detect collision with enemies
-        if(player.getRectangle().overlaps(enemyCar.getRectangle()))
-        {
-            if(enemyCar.getScoreFactor() > player.getScoreFactor())
-            {
-                this.GAME_OVER = true;
-                return;
-            }
-            else
-            {
-                //mc score will increase
-                player.setScore(enemyCar.getScoreFactor());
-                spawnEnemyCar();
-            }
-        }
-
-    }
 
 
     private int checkDirection(int value)
     {
+
         // i= 0(left to right), 1 ( right to left), 2 (static)
         int i = 0;
         if(value >= 8 && value < 15) i = 1;
         else if(value >= 15 && value < 22) i = 2;
         return i;
+    }
+
+    private void setAnimalIndicatorCenter()
+    {
+        indicatorAnimal.setCenterX(enemyAnimal.getRectangle().x+ enemyAnimal.getRectangle().width/2);
+        indicatorAnimal.setCenterY(enemyAnimal.getRectangle().y+enemyAnimal.getRectangle().height/2);
     }
 
 
