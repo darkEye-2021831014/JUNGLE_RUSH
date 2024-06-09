@@ -63,7 +63,6 @@ public class ProcessInput implements InputProcessor {
             case Input.Keys.UP:
             case Input.Keys.W:
                 if(!gameScreen.isOnHold() && !gameScreen.isPaused() && !gameScreen.isGameOver()) {
-                    gameScreen.getCarSpeedUpSound().stop();
                     gameScreen.getCarSpeedUpSound().play();
                 }
                 break;
@@ -78,7 +77,7 @@ public class ProcessInput implements InputProcessor {
         {
             case Input.Keys.UP:
             case Input.Keys.W:
-//                gameScreen.getCarSpeedUpSound().pause();
+                gameScreen.getCarSpeedUpSound().stop();
                 break;
         }
         return true;

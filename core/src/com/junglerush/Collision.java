@@ -53,6 +53,10 @@ public class Collision {
             }
             else
             {
+                gameScreen.getCollisionWithNormalCar().stop();
+                gameScreen.getCollisionWithGreenAnimal().stop();
+                gameScreen.getCollisionWithStrongAnimal().stop();
+                gameScreen.getCollisionWithNormalCar().play(0.5f);
                 player.setScore(enemyCar.getScore(),false);
                 gameScreen.spawnEnemyCar();
             }
@@ -63,13 +67,17 @@ public class Collision {
         {
             if(enemyAnimal.isDivide())
             {
+                gameScreen.getCollisionWithNormalCar().stop();
+                gameScreen.getCollisionWithGreenAnimal().stop();
                 gameScreen.getCollisionWithStrongAnimal().stop();
-                gameScreen.getCollisionWithStrongAnimal().play(0.6f);
+                gameScreen.getCollisionWithStrongAnimal().play(0.3f);
             }
             else
             {
+                gameScreen.getCollisionWithNormalCar().stop();
                 gameScreen.getCollisionWithGreenAnimal().stop();
-                gameScreen.getCollisionWithGreenAnimal().play(0.6f);
+                gameScreen.getCollisionWithStrongAnimal().stop();
+                gameScreen.getCollisionWithGreenAnimal().play(0.3f);
             }
             player.setScore(enemyAnimal.getScore(),enemyAnimal.isDivide());
             if(player.getScore().compareTo(BigInteger.valueOf(0)) <= 0)

@@ -6,88 +6,69 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 
+
 public class Trees {
-    private Array<Rectangle> rectanglesLeft,rectanglesRight;
+    private Array<Rectangle> rectangles;
     private Array<Texture> textures;
-    private Array<Integer> treeIndexLeft,treeIndexRight;
-    public Trees() {
-        rectanglesLeft = new Array<>();
-        rectanglesRight = new Array<>();
+    private Array<Integer> treeIndex;
+    private int treeHeight;
+    public Trees(int treeHeight) {
+        this.treeHeight = treeHeight;
         textures = new Array<>();
-        treeIndexLeft = new Array<>();
-        treeIndexRight = new Array<>();
+        rectangles = new Array<>();
+        treeIndex = new Array<>();
     }
 
     public void addTexture(Texture texture) {
         textures.add(texture);
     }
 
-    public void addRectangleLeft(Rectangle rectangle) {
-        rectanglesLeft.add(rectangle);
-    }
-    public void addRectangleRight(Rectangle rectangle) {
-        rectanglesRight.add(rectangle);
-    }
-
-    public void addTreeIndexLeft(int treeIndex) {
-        this.treeIndexLeft.add(treeIndex);
-    }
-
-    public void addTreeIndexRight(int treeIndex) {
-        this.treeIndexRight.add(treeIndex);
-    }
-
     public void draw(SpriteBatch batch)
     {
-        for (int i = 0; i < rectanglesLeft.size; i++) {
-            batch.draw(textures.get(treeIndexLeft.get(i)), rectanglesLeft.get(i).x, rectanglesLeft.get(i).y,rectanglesLeft.get(i).width,rectanglesLeft.get(i).height);
-            batch.draw(textures.get(treeIndexRight.get(i)), rectanglesRight.get(i).x, rectanglesRight.get(i).y,rectanglesRight.get(i).width,rectanglesRight.get(i).height);
+        int i = 0;
+        for (Rectangle rect:rectangles) {
+            batch.draw(textures.get(treeIndex.get(i++)), rect.x, rect.y,rect.width,rect.height);
         }
     }
 
-    public void update(int speed,int treeHeight)
+    public void addTreeIndex(int i)
     {
-        for (int i = 0; i < rectanglesLeft.size; i++) {
-            rectanglesLeft.get(i).y -= speed;
-            if(rectanglesLeft.get(i).y <= -treeHeight)
-            {
-                rectanglesLeft.get(i).y = 15 * treeHeight;
-                treeIndexLeft.set(i,MathUtils.random(0,textures.size-1));
-            }
+        treeIndex.add(i);
+    }
 
-            rectanglesRight.get(i).y -= speed;
-            if(rectanglesRight.get(i).y <= -treeHeight)
+    public void addRectangle(Rectangle rectangle) {
+        this.rectangles.add(rectangle);
+    }
+
+    public void update(int speed,int jungleWidth,int treeWidth,float x)
+    {
+        for (int i=0;i<rectangles.size;i++) {
+            rectangles.get(i).y -= speed;
+            if(rectangles.get(i).y <= -treeHeight)
             {
-                rectanglesRight.get(i).y = 15*treeHeight;
-                treeIndexRight.set(i,MathUtils.random(0,textures.size-1));
+                rectangles.get(i).y = 16 * treeHeight;
+                rectangles.get(i).x = x+ MathUtils.random(0,jungleWidth-treeWidth);
+                treeIndex.set(i,MathUtils.random(0,textures.size-1));
             }
         }
     }
-
-
-
 
 
     //getters & setters
 
-
-    public Array<Rectangle> getRectanglesLeft() {
-        return rectanglesLeft;
-    }
-
-    public Array<Rectangle> getRectanglesRight() {
-        return rectanglesRight;
+    public Array<Rectangle> getRectangles() {
+        return rectangles;
     }
 
     public Array<Texture> getTextures() {
         return textures;
     }
 
-    public Array<Integer> getTreeIndexLeft() {
-        return treeIndexLeft;
+    public Array<Integer> getTreeIndex() {
+        return treeIndex;
     }
 
-    public Array<Integer> getTreeIndexRight() {
-        return treeIndexRight;
+    public int getTreeHeight() {
+        return treeHeight;
     }
 }
