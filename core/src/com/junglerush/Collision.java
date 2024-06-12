@@ -37,7 +37,7 @@ public class Collision {
         for(Rectangle rect:background.getBoarderRect())
             if(detectCollision(rect,player.getRectangle()))
             {
-                gameScreen.getBoarderCollisionSound().play(0.6f);
+                gameScreen.getBoarderCollisionSound().play();
                 gameOver();
                 return;
             }
@@ -56,7 +56,7 @@ public class Collision {
                 gameScreen.getCollisionWithNormalCar().stop();
                 gameScreen.getCollisionWithGreenAnimal().stop();
                 gameScreen.getCollisionWithStrongAnimal().stop();
-                gameScreen.getCollisionWithNormalCar().play(0.5f);
+                gameScreen.getCollisionWithNormalCar().play(0.9f);
                 player.setScore(enemyCar.getScore(),false);
                 gameScreen.spawnEnemyCar();
             }
@@ -70,14 +70,14 @@ public class Collision {
                 gameScreen.getCollisionWithNormalCar().stop();
                 gameScreen.getCollisionWithGreenAnimal().stop();
                 gameScreen.getCollisionWithStrongAnimal().stop();
-                gameScreen.getCollisionWithStrongAnimal().play(0.3f);
+                gameScreen.getCollisionWithStrongAnimal().play(0.8f);
             }
             else
             {
                 gameScreen.getCollisionWithNormalCar().stop();
                 gameScreen.getCollisionWithGreenAnimal().stop();
                 gameScreen.getCollisionWithStrongAnimal().stop();
-                gameScreen.getCollisionWithGreenAnimal().play(0.3f);
+                gameScreen.getCollisionWithGreenAnimal().play(0.8f);
             }
             player.setScore(enemyAnimal.getScore(),enemyAnimal.isDivide());
             if(player.getScore().compareTo(BigInteger.valueOf(0)) <= 0)
@@ -110,6 +110,8 @@ public class Collision {
     {
         gameScreen.setGameOver(true);
         for(Sound sound:gameScreen.getSoundArray())
+            sound.stop();
+        for(Sound sound:gameScreen.getForestBirdSounds())
             sound.stop();
         game.setScreen(new GameOverScreen(player,game,gameScreen));
 

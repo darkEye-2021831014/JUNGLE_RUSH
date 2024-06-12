@@ -65,6 +65,30 @@ public class Score {
         font.draw(batch,g1,textX,textY);
     }
 
+    public void draw(Batch batch,String text,boolean isMid){
+        setFontScale(this.fontScale) ;
+        GlyphLayout g1 = new GlyphLayout();
+        g1.setText(font,text);
+        if(g1.width > rectangle.width)
+        {
+            float scale = rectangle.width/g1.width;
+            font.getData().setScale(scale);
+            g1.setText(font,text);
+        }
+        float textX = rectangle.x;
+        float textY = rectangle.y;
+        font.draw(batch,text,textX,textY);
+    }
+
+    public void drawXY(Batch batch,String text,int width,int height){
+        setFontScale(this.fontScale) ;
+        GlyphLayout g1 = new GlyphLayout();
+        g1.setText(font,text);
+        float textX = width - g1.width/2f;
+        float textY = height + g1.height/2f;
+        font.draw(batch,g1,textX,textY);
+    }
+
     public void setColor(Color color){
         font.setColor(color);
     }

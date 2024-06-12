@@ -76,7 +76,7 @@ public class Player {
         text.setRectangle(scoreRect);
         text.draw(batch,"Score\nTree");
         scoreRect.y -= scoreHeight;
-        text.draw(batch,"----------");
+        text.draw(batch,"\n----------");
         scoreRect.y-=scoreHeight;
         while (descendingIterator.hasNext())
         {
@@ -140,6 +140,8 @@ public class Player {
 
     public void setScore(BigInteger curScore,boolean isDivide)
     {
+        //always take the power 2 value
+        curScore = Enemy.power2(setBits(curScore));
         if(isDivide) {
             assert this.score != null;
             curScore = this.score.divide(curScore);

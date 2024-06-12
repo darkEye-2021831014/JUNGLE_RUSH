@@ -1,6 +1,7 @@
 package com.junglerush;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
@@ -41,8 +42,11 @@ public class GameScreen implements Screen {
     private Array<Sound> forestBirdSounds;
     private Array<Sound> soundArray;
 
+
+
     public GameScreen(final JungleRush game)
     {
+
         this.game = game;
         this.forestLeft = new Trees(50);
         this.forestRight = new Trees(50);
@@ -320,11 +324,11 @@ public class GameScreen implements Screen {
 
     private void update()
     {
-        if(elapsedTime == 0)
-            forestBirdSounds.get(MathUtils.random(0, forestBirdSounds.size - 1)).play();
         elapsedTime += Gdx.graphics.getDeltaTime();
-        if(elapsedTime >= MathUtils.random(5,12))
+        if(elapsedTime >= MathUtils.random(3,8)) {
+            forestBirdSounds.get(MathUtils.random(0, forestBirdSounds.size - 1)).play(0.95f);
             elapsedTime = 0;
+        }
         forestLeft.update(player.getSpeed(),this.JUNGLE_WIDTH,this.ELEMENT_WIDTH,0);
         forestRight.update(player.getSpeed(),this.JUNGLE_WIDTH,this.ELEMENT_WIDTH,
                 this.JUNGLE_WIDTH+this.ROAD_WIDTH+this.BOARDER_WIDTH*2);
