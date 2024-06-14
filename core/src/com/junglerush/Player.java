@@ -192,6 +192,9 @@ public class Player {
         this.downMove = downMove;
     }
 
+
+
+
     public BigInteger getScore() {
         return score;
     }

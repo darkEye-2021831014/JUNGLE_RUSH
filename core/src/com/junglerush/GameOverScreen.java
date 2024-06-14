@@ -49,7 +49,9 @@ public class GameOverScreen implements Screen {
         gameOverText.drawXY(game.batch,"Tap Anywhere or Press Space To Restart",game.SCREEN_WIDTH/2-180,game.SCREEN_HEIGHT/2);
 
         gameOverText.setColor(new Color(gameOverText.getOpacity(),1,1,1));
-        gameOverText.drawXY(game.batch,"        Game Over\nHighest Score Achieved: "+player.getMaxScore(),game.SCREEN_WIDTH/2-180,game.SCREEN_HEIGHT/2+200);
+        String highestScore = player.getMaxScore().toString();
+        if(player.getMaxScore().compareTo(BigInteger.valueOf(100000))>=0) highestScore = NumberFormatter.formatBigInteger(player.getMaxScore());
+        gameOverText.drawXY(game.batch,"        Game Over\nHighest Score Achieved: "+highestScore,game.SCREEN_WIDTH/2-180,game.SCREEN_HEIGHT/2+200);
 
 
 

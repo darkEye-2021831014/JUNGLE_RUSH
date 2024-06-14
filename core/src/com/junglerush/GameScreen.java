@@ -28,7 +28,6 @@ public class GameScreen implements Screen {
     private int totalCount = 3;
     private Rectangle centerRectangle;
 
-    private ShapeRenderer shapeRenderer;
     private final Player player;
     private final Enemy enemyCar,enemyAnimal;
     private final Score enemyScoreText,playerScoreText,enemyAnimalScoreText;
@@ -66,7 +65,6 @@ public class GameScreen implements Screen {
         indicatorAnimal = new Indicator(200,player.getScore(),enemyCar.getScore());
 
         collision = new Collision(player,background,enemyCar,enemyAnimal,this,game);
-        shapeRenderer = new ShapeRenderer();
 
         initializeBackground();
 
@@ -135,15 +133,19 @@ public class GameScreen implements Screen {
 
 
     private void loadCarIndicator() {
+        updateIndicatorXY();
+
+        loadParticles(indicatorCarLeft);
+        loadParticles(indicatorCarRight);
+
+    }
+
+    private void updateIndicatorXY() {
         indicatorCarLeft.setCenterX(background.getBoarderRect().get(0).x + background.getBoarderRect().get(0).width/2);
         indicatorCarRight.setCenterX(background.getBoarderRect().get(1).x + background.getBoarderRect().get(1).width/2);
 
         indicatorCarLeft.setCenterY(enemyCar.getRectangle().y+enemyCar.getRectangle().height/2);
         indicatorCarRight.setCenterY(indicatorCarLeft.getCenterY());
-
-        loadParticles(indicatorCarLeft);
-        loadParticles(indicatorCarRight);
-
     }
 
     private void loadParticles(Indicator indicator) {
@@ -264,11 +266,11 @@ public class GameScreen implements Screen {
             player.draw(game.batch, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, background);
             game.batch.end();
 
-            this.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            indicatorCarLeft.draw(shapeRenderer, 0.7f);
-            indicatorCarRight.draw(shapeRenderer, 0.7f);
-            indicatorAnimal.draw(shapeRenderer, 0.5f);
-            this.shapeRenderer.end();
+            game.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            indicatorCarLeft.draw(game.shapeRenderer, 0.7f);
+            indicatorCarRight.draw(game.shapeRenderer, 0.7f);
+            indicatorAnimal.draw(game.shapeRenderer, 0.5f);
+            game.shapeRenderer.end();
 
             game.batch.begin();
             PauseResume();
@@ -349,8 +351,7 @@ public class GameScreen implements Screen {
     }
 
     private void updateCarIndicator() {
-        indicatorCarLeft.updateCenterY(enemyCar.getSpeed(),enemyCar);
-        indicatorCarRight.updateCenterY(enemyCar.getSpeed(),enemyCar);
+        updateIndicatorXY();
         indicatorCarLeft.update();
         indicatorCarRight.update();
 

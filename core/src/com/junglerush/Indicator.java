@@ -55,7 +55,7 @@ public class Indicator {
         }
     }
 
-    public void updateCenterY(float enemySpeed, Enemy enemy)
+    public void updateCenterY(Enemy enemy)
     {
         this.centerY = enemy.getRectangle().y+enemy.getRectangle().height/2;
     }

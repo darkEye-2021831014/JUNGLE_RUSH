@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextField;
@@ -24,6 +25,7 @@ public class JungleRush extends Game {
 	private FreeTypeFontGenerator generator;
 	private FreeTypeFontGenerator.FreeTypeFontParameter parameter;
 	SpriteBatch batch;
+	ShapeRenderer shapeRenderer;
 	public static String playerName;
 
 
@@ -35,6 +37,7 @@ public class JungleRush extends Game {
 	@Override
 	public void create () {
 		batch = new SpriteBatch();
+		shapeRenderer =new ShapeRenderer();
 		this.setScreen(new MainMenuScreen(this));
 	}
 

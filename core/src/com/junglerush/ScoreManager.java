@@ -1,22 +1,18 @@
 package com.junglerush;
 
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Preferences;
-import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.utils.Array;
 
+import com.badlogic.gdx.utils.Array;
 import java.io.*;
 import java.math.BigInteger;
-import java.nio.file.Path;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
+
 public class ScoreManager {
-    String fileName = "highestScores.txt";
+    private String fileName = "Files/highestScores.txt";
     private Array<PlayerData> playerData;
 
     public ScoreManager() {
+
         this.playerData = new Array<>();
         loadData();
     }
