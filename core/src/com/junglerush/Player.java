@@ -91,7 +91,7 @@ public class Player {
         }
     }
 
-    public void update(Enemy enemyCar,Background background) {
+    public void update(Enemy enemyCar,Enemy enemyAnimal,Background background) {
         if(this.leftMove) this.rectangle.x -= this.speed;
         if(this.rightMove) this.rectangle.x += this.speed;
 
@@ -103,10 +103,12 @@ public class Player {
         else if(this.downMove) {
             this.speed = 3;
             enemyCar.setSpeed(0);
+            enemyAnimal.setSpeed(4);
         }
         else {
             this.speed = 5;
             enemyCar.setSpeed(2);
+            enemyAnimal.setSpeed(3);
         }
 
         //avoid gap in the road;

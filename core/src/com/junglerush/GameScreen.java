@@ -381,7 +381,7 @@ public class GameScreen implements Screen {
     private void updatePlayer() {
         playerScoreText.blinkingEffect(0.02f,0.01f,0.5f);
         player.setTextColor(new Color(1,1,1,playerScoreText.getOpacity()));
-        player.update(enemyCar,background);
+        player.update(enemyCar,enemyAnimal,background);
     }
 
     private void updateEnemyCar() {
