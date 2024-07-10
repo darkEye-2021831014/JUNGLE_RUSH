@@ -2,32 +2,10 @@ package com.junglerush;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Button;
-import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextField;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable;
-import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.badlogic.gdx.utils.Timer;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.GL20;
-
-import javax.swing.*;
-import java.util.Scanner;
 
 public class MainMenuScreen implements Screen {
 
@@ -38,7 +16,7 @@ public class MainMenuScreen implements Screen {
     private final Texture tigImage;
     private final Texture lioImage;
     private final Texture deerImage;
-    private Score mainMenuText;
+    private final Score mainMenuText;
 
     public MainMenuScreen(JungleRush game) {
         this.game = game;

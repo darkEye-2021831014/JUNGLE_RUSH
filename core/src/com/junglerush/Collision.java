@@ -10,6 +10,8 @@ import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.Timer.Task;
 
 import java.math.BigInteger;
+import com.badlogic.gdx.audio.Music;
+
 
 public class Collision {
     private final Player player;
@@ -113,6 +115,8 @@ public class Collision {
             sound.stop();
         for(Sound sound:gameScreen.getForestBirdSounds())
             sound.stop();
+        for(Music bgMusic:gameScreen.getBgMusic())
+            bgMusic.stop();
         game.setScreen(new GameOverScreen(player,game,gameScreen));
 
     }

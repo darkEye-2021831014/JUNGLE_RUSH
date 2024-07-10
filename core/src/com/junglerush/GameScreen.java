@@ -23,7 +23,7 @@ public class GameScreen implements Screen {
     private final int TOTAL_TILES = 20;
     private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,
             BOARDER_WIDTH;
-    private boolean isPaused = true,onHold = true,gameOver = false;
+    private boolean isPaused = true,onHold = true,gameOver = false,increaseVolume = true;
     private float elapsedTime = 0;
     private int totalCount = 3;
     private Rectangle centerRectangle;
@@ -40,6 +40,7 @@ public class GameScreen implements Screen {
             collisionWithNormalCar;
     private Array<Sound> forestBirdSounds;
     private Array<Sound> soundArray;
+    private Array<Music> bgMusic;
 
 
 
@@ -74,7 +75,7 @@ public class GameScreen implements Screen {
     private void startPlayingSounds() {
         countdownSound.play();
         carStartingSound.play();
-        roadSound.loop();
+        roadSound.loop(0.4f);
     }
 
     private void initializeBackground() {
@@ -96,6 +97,8 @@ public class GameScreen implements Screen {
     private void loadSounds() {
         soundArray = new Array<>();
         forestBirdSounds = new Array<>();
+        bgMusic  = new Array<>();
+
         countdownSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/gameCountdown.wav"));
         carStartingSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/carStarting1.mp3"));
         roadSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/roadAmbience1.mp3"));
@@ -110,6 +113,9 @@ public class GameScreen implements Screen {
         collisionWithNormalCar = Gdx.audio.newSound(Gdx.files.internal("Sounds/dashingWithCar1.wav"));
         forestBirdSounds.add(Gdx.audio.newSound(Gdx.files.internal("Sounds/forestBirdsChirpingSound.wav")));
         forestBirdSounds.add(Gdx.audio.newSound(Gdx.files.internal("Sounds/forestBirdsChirpingSound1.wav")));
+
+        for(int i=1;i<=2;i++)
+            bgMusic.add(Gdx.audio.newMusic(Gdx.files.internal("Music/gamePlayBG"+i+".mp3")));
 
         soundArray.add(countdownSound);
         soundArray.add(carStartingSound);
@@ -310,6 +316,14 @@ public class GameScreen implements Screen {
             {
                 setOnHold(false);
                 setPaused(false);
+
+                //start playing bg music
+                for(Music bgMusic:bgMusic)
+                {
+                    bgMusic.setVolume(0.01f);
+                    bgMusic.setLooping(true);
+                    bgMusic.play();
+                }
                 return;
             }
         }
@@ -339,7 +353,21 @@ public class GameScreen implements Screen {
         updatePlayer();
         updateEnemyAnimal();
 
+        updateBgMusic((10+MathUtils.random()%20)/100f,(30+MathUtils.random()%40)/100f);
+
         collision.update();
+
+    }
+
+
+    private void updateBgMusic(float lowerLimit,float upperLimit) {
+        for(Music bgMusic:bgMusic) {
+            if(bgMusic.getVolume() <= lowerLimit) increaseVolume = true;
+            if(bgMusic.getVolume() >= upperLimit) increaseVolume = false;
+            System.out.println(bgMusic.getVolume() + " " + lowerLimit + " " + upperLimit + " " + increaseVolume);
+            if (increaseVolume) bgMusic.setVolume(bgMusic.getVolume() + 0.01f);
+            else bgMusic.setVolume(bgMusic.getVolume() - 0.01f);
+        }
 
     }
 
@@ -534,5 +562,9 @@ public class GameScreen implements Screen {
 
     public Array<Sound> getForestBirdSounds() {
         return forestBirdSounds;
+    }
+
+    public Array<Music> getBgMusic() {
+        return bgMusic;
     }
 }
