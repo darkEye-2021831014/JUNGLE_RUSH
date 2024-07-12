@@ -1,14 +1,14 @@
 Ashraf:131072
 darkEye:32768
 Ashraf:2048
+Ashraf:2048
 Ashraful:1024
 Ashraful Islam:512
 Ashraful:256
 Ashraful:128
 aysha:128
 aysha:128
+Ashraful:128
 darkEye:64
 darkEye:64
 aysha:64
-aysha:64
-Ashraful:64

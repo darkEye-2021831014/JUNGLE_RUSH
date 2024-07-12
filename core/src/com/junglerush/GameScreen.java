@@ -353,7 +353,7 @@ public class GameScreen implements Screen {
         updatePlayer();
         updateEnemyAnimal();
 
-        updateBgMusic((10+MathUtils.random()%20)/100f,(30+MathUtils.random()%40)/100f);
+        updateBgMusic(0.3f,0.8f);
 
         collision.update();
 
@@ -364,9 +364,8 @@ public class GameScreen implements Screen {
         for(Music bgMusic:bgMusic) {
             if(bgMusic.getVolume() <= lowerLimit) increaseVolume = true;
             if(bgMusic.getVolume() >= upperLimit) increaseVolume = false;
-            System.out.println(bgMusic.getVolume() + " " + lowerLimit + " " + upperLimit + " " + increaseVolume);
-            if (increaseVolume) bgMusic.setVolume(bgMusic.getVolume() + 0.01f);
-            else bgMusic.setVolume(bgMusic.getVolume() - 0.01f);
+            if (increaseVolume) bgMusic.setVolume(bgMusic.getVolume() + 0.002f);
+            else bgMusic.setVolume(bgMusic.getVolume() - 0.002f);
         }
 
     }

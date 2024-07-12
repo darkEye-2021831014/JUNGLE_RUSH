@@ -1,6 +1,8 @@
 package com.junglerush;
 
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import java.io.*;
 import java.math.BigInteger;
@@ -8,8 +10,8 @@ import java.util.*;
 
 
 public class ScoreManager {
-    private String fileName = "Files/highestScores.txt";
-    private Array<PlayerData> playerData;
+    private final String fileName = "Files/highestScores.txt";
+    private final Array<PlayerData> playerData;
 
     public ScoreManager() {
 
@@ -24,25 +26,20 @@ public class ScoreManager {
 
     public void loadData()
     {
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                StringBuilder playerScore = new StringBuilder(),
-                        playerName = new StringBuilder();
-                int ok = 0;
-                for (int i = 0; i < line.length(); i++) {
-                    if(ok==1) playerScore.append(line.charAt(i));
-                    if(line.charAt(i)==':') ok=1;
-                    if(ok == 0)playerName.append(line.charAt(i));
-                }
-                playerData.add(new PlayerData(playerName.toString(),new BigInteger(playerScore.toString())));
+        FileHandle file = Gdx.files.internal(fileName);
+
+        for (String line : file.readString().split("\n")) {
+
+            StringBuilder playerScore = new StringBuilder(),
+                    playerName = new StringBuilder();
+            int ok = 0;
+            for (int i = 0; i < line.length(); i++) {
+                if(ok==1) playerScore.append(line.charAt(i));
+                if(line.charAt(i)==':') ok=1;
+                if(ok == 0)playerName.append(line.charAt(i));
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+            playerData.add(new PlayerData(playerName.toString(),new BigInteger(playerScore.toString())));
         }
-
-
-
 
     }
 
@@ -62,14 +59,10 @@ public class ScoreManager {
         }
 
         int cnt = 0;
+        FileHandle file = Gdx.files.external(fileName);
         for(PlayerData player:playerData)
         {
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName, cnt != 0))) {
-                bw.write(player.getPlayerName() + ":" + player.getScore().toString() + "\n"); // Add a newline character to separate scores
-            } catch (IOException e) {
-                e.printStackTrace();
-                System.err.println("Failed to write score to file: " + e.getMessage());
-            }
+            file.writeString(player.getPlayerName() + ":" + player.getScore().toString() + "\n",cnt!=0);
             cnt++;
         }
     }
