@@ -11,13 +11,8 @@ public class JungleRush extends Game {
 	final int SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 800;
 	public SpriteBatch batch;
 	public ShapeRenderer shapeRenderer;
-	public static String playerName;
+	public static String playerName = null;
 
-
-	public void setPlatform(Platform platform)
-	{
-		playerName = platform.getPlayerName();
-	}
 
 	@Override
 	public void create () {

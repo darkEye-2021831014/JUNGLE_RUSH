@@ -58,14 +58,18 @@ public class ScoreManager {
             playerData.removeIndex(playerData.size-1);
         }
 
+
         int cnt = 0;
-        FileHandle file = Gdx.files.external(fileName);
         for(PlayerData player:playerData)
         {
-            file.writeString(player.getPlayerName() + ":" + player.getScore().toString() + "\n",cnt!=0);
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName, cnt != 0))) {
+                bw.write(player.getPlayerName() + ":" + player.getScore().toString() + "\n"); // Add a newline character to separate scores
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.err.println("Failed to write score to file: " + e.getMessage());
+            }
             cnt++;
         }
     }
-
 
 }
