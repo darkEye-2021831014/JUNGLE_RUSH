@@ -12,12 +12,13 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import java.math.BigInteger;
 import java.util.Objects;
 
+import static com.junglerush.JungleRush.scoreManager;
+
 public class GameOverScreen implements Screen {
     private final Player player;
     private final JungleRush game;
     private final Score gameOverText;
     private final Score gameOverTextBold;
-    private final ScoreManager scoreManager;
     private Texture backgroundTexture1;
     private Texture backgroundTexture2;
     private Texture logoImage;
@@ -32,7 +33,7 @@ public class GameOverScreen implements Screen {
     public GameOverScreen(Player player, JungleRush game, GameScreen gameScreen) {
         this.player = player;
         this.game = game;
-        scoreManager = new ScoreManager();
+
         gameOverText = new Score("Fonts/robotoMonoRegular.ttf", 32, 1);
         gameOverTextBold = new Score("Fonts/robotoMonoBold.ttf", 32, 1);
         gameOverText.setColor(Color.WHITE);

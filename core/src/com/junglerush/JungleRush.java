@@ -12,12 +12,14 @@ public class JungleRush extends Game {
 	public SpriteBatch batch;
 	public ShapeRenderer shapeRenderer;
 	public static String playerName = null;
+	public static ScoreManager scoreManager;
 
 
 	@Override
 	public void create () {
 		batch = new SpriteBatch();
 		shapeRenderer =new ShapeRenderer();
+		scoreManager = new ScoreManager();
 		this.setScreen(new MainMenuScreen(this));
 	}
 
@@ -30,5 +32,6 @@ public class JungleRush extends Game {
 	public void dispose () {
 		batch.dispose();
 		shapeRenderer.dispose();
+		scoreManager.disconnect();
 	}
 }
