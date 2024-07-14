@@ -31,9 +31,13 @@ public class ScoreManager {
 
     private final String fileName = "highestScores.txt";
     private final Array<PlayerData> playerData;
+    private boolean isConnected = false;
 
     public ScoreManager() {
-        connect();
+        if(NetworkUtils.hasInternetConnection()) {
+            connect();
+            isConnected = true;
+        }
         this.playerData = new Array<>();
         loadData();
     }
@@ -75,21 +79,7 @@ public class ScoreManager {
         else
         {
             System.out.println("Error! Failed To Load File");
-            String defaultValue = "darkEye:524288\n" +
-                    "Ashraf:131072\n" +
-                    "darkEye:32768\n" +
-                    "void:32768\n" +
-                    "darkEye:8192\n" +
-                    "darkEye:8192\n" +
-                    "Ashraf:2048\n" +
-                    "Ashraf:2048\n" +
-                    "void:2048\n" +
-                    "void:2048\n" +
-                    "Ashraful:1024\n" +
-                    "Ashraful Islam:512\n" +
-                    "Ashraful:256\n" +
-                    "Ashraful:128";
-            return defaultValue;
+            return Gdx.files.local("Files/"+fileName).readString();
         }
     }
 
@@ -104,9 +94,19 @@ public class ScoreManager {
 
     public void loadData()
     {
-        String fileContent = getFileContent();
+        playerData.clear();
+        String fileContent;
+        //check network availability
+        if(NetworkUtils.hasInternetConnection()) {
+            if(!isConnected) {
+                connect();
+                isConnected = true;
+            }
+            fileContent = getFileContent();
+        }
+        else fileContent = Gdx.files.local("Files/"+fileName).readString();
 
-//        String fileContent = Gdx.files.internal(fileName).readString();
+
         for (String line : fileContent.split("\n")) {
 
             StringBuilder playerScore = new StringBuilder(),
@@ -125,6 +125,8 @@ public class ScoreManager {
 
 
     public void addScore(String playerName, BigInteger score,int limit) {
+        if(!isConnected) loadData();
+
         playerData.add(new PlayerData(playerName,score));
         //sort in descending order
         playerData.sort(new Comparator<PlayerData>() {
@@ -146,7 +148,11 @@ public class ScoreManager {
             stringBuilder.append(player.getPlayerName()).append(":").append(player.getScore().toString()).append("\n");
         }
 
-        saveFileContent(stringBuilder.toString());
+        if(isConnected && NetworkUtils.hasInternetConnection())
+            saveFileContent(stringBuilder.toString());
+
+        //write to local file
+        Gdx.files.local("Files/"+fileName).writeString(stringBuilder.toString(),false);
     }
 
 }
