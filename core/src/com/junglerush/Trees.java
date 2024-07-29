@@ -71,4 +71,10 @@ public class Trees {
     public int getTreeHeight() {
         return treeHeight;
     }
+
+    public void cleanUp()
+    {
+        for(Texture texture:textures)
+            texture.dispose();
+    }
 }

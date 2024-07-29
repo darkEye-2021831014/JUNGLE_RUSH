@@ -224,4 +224,9 @@ public class Player {
     public BigInteger getMaxScore() {
         return maxScore;
     }
+
+    public void cleanUp()
+    {
+        texture.dispose();
+    }
 }

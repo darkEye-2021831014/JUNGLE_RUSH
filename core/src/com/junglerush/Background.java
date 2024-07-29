@@ -111,4 +111,10 @@ public class Background {
     public Rectangle getRiverRect() {
         return riverRect;
     }
+
+    public  void cleanUp()
+    {
+        for(Texture texture:texture)
+            texture.dispose();
+    }
 }

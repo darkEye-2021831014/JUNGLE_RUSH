@@ -2,11 +2,12 @@ package com.junglerush;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
 
 public class ProcessInput implements InputProcessor {
 
     private final Player player;
-    private final GameScreen gameScreen;
+    public static GameScreen gameScreen;
 
     public ProcessInput(Player player,GameScreen gameScreen) {
         this.player = player;
@@ -42,23 +43,7 @@ public class ProcessInput implements InputProcessor {
         switch (keyCode)
         {
             case Input.Keys.SPACE:
-                if(!gameScreen.isOnHold()) {
-                    gameScreen.setPaused(!gameScreen.isPaused());
-                    if(gameScreen.isPaused()) {
-                        gameScreen.getRoadSound().pause();
-
-                        gameScreen.getPauseSound().stop();
-                        gameScreen.getResumeSound().stop();
-                        gameScreen.getPauseSound().play();
-                    }
-                    else {
-                        gameScreen.getRoadSound().resume();
-
-                        gameScreen.getPauseSound().stop();
-                        gameScreen.getResumeSound().stop();
-                        gameScreen.getResumeSound().play();
-                    }
-                }
+                pressedSpace();
                 break;
             case Input.Keys.UP:
             case Input.Keys.W:
@@ -66,8 +51,31 @@ public class ProcessInput implements InputProcessor {
                     gameScreen.getCarSpeedUpSound().play();
                 }
                 break;
+            case Input.Keys.L:
+                gameScreen.setShowLineIndicator(!gameScreen.isShowLineIndicator());
+                break;
         }
         return true;
+    }
+
+    public static void pressedSpace() {
+        if(!gameScreen.isOnHold()) {
+            gameScreen.setPaused(!gameScreen.isPaused());
+            if(gameScreen.isPaused()) {
+                gameScreen.getRoadSound().pause();
+
+                gameScreen.getPauseSound().stop();
+                gameScreen.getResumeSound().stop();
+                gameScreen.getPauseSound().play();
+            }
+            else {
+                gameScreen.getRoadSound().resume();
+
+                gameScreen.getPauseSound().stop();
+                gameScreen.getResumeSound().stop();
+                gameScreen.getResumeSound().play();
+            }
+        }
     }
 
     @Override
@@ -88,8 +96,9 @@ public class ProcessInput implements InputProcessor {
         return false;
     }
 
+
     @Override
-    public boolean touchDown(int i, int i1, int i2, int i3) {
+    public boolean touchDown(int screenX,int screenY,int pointer,int button) {
         return false;
     }
 

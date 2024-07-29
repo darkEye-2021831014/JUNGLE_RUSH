@@ -1,5 +1,7 @@
+
+
 buildscript {
-    
+
 
     repositories {
         mavenLocal()
@@ -9,10 +11,12 @@ buildscript {
         google()
     }
     dependencies {
-        
+
 
     }
 }
+
+
 
 allprojects {
     apply plugin: "eclipse"
@@ -52,6 +56,9 @@ project(":desktop") {
 
         implementation "com.badlogicgames.gdx:gdx-lwjgl3-glfw-awt-macos:$gdxVersion"
     }
+
+
+
 }
 
 project(":core") {
@@ -69,6 +76,7 @@ project(":core") {
         implementation 'org.mongodb:mongodb-driver-sync:4.7.1'
         implementation 'org.slf4j:slf4j-api:1.7.32'
 
-
     }
+
+
 }

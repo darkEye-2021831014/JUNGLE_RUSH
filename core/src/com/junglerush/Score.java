@@ -35,6 +35,7 @@ public class Score {
         parameter.size = this.fontSize;
         font = generator.generateFont(parameter);
         setFontScale(this.fontScale);
+        generator.dispose();
     }
 
     public void setOpacity(float opacity) {
@@ -116,5 +117,10 @@ public class Score {
 
     public float getFontScale() {
         return fontScale;
+    }
+
+    public void cleanUp()
+    {
+        font.dispose();
     }
 }

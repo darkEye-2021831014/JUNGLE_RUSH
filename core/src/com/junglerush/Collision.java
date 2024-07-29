@@ -115,9 +115,9 @@ public class Collision {
             sound.stop();
         for(Sound sound:gameScreen.getForestBirdSounds())
             sound.stop();
-        for(Music bgMusic:gameScreen.getBgMusic())
-            bgMusic.stop();
+        for(MusicManager musicManager:gameScreen.getBgMusic())
+            musicManager.getMusic().stop();
         game.setScreen(new GameOverScreen(player,game,gameScreen));
-
     }
+
 }

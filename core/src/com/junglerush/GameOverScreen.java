@@ -17,6 +17,7 @@ import static com.junglerush.JungleRush.scoreManager;
 public class GameOverScreen implements Screen {
     private final Player player;
     private final JungleRush game;
+    private final GameScreen gameScreen;
     private final Score gameOverText;
     private final Score gameOverTextBold;
     private Texture backgroundTexture1;
@@ -33,6 +34,7 @@ public class GameOverScreen implements Screen {
     public GameOverScreen(Player player, JungleRush game, GameScreen gameScreen) {
         this.player = player;
         this.game = game;
+        this.gameScreen=gameScreen;
 
         gameOverText = new Score("Fonts/robotoMonoRegular.ttf", 32, 1);
         gameOverTextBold = new Score("Fonts/robotoMonoBold.ttf", 32, 1);
@@ -109,10 +111,20 @@ public class GameOverScreen implements Screen {
         float logoHeight = logoImage1.getHeight();
         float yPosition = nameRect.y;
 
+        int pos = 1;
         for (PlayerData player : players) {
             // logoImage1 for each text line
             game.batch.draw(logoImage1, nameRect.x-30, yPosition + 7 - (logoHeight - 80) / 2, 450, 40);
-            gameOverText.setColor(new Color(1, gameOverText.getOpacity(), 1, 1));
+            if(pos == 1)
+                gameOverText.setColor(new Color(1, 0, 0, 1));
+            else if(pos==2)
+                gameOverText.setColor(new Color(1, 0.5f, 0, 1));
+            else if(pos==3)
+                gameOverText.setColor(new Color(0,1,1 , 1));
+            else
+                gameOverText.setColor(new Color(1, gameOverText.getOpacity(), 1, 1));
+            pos++;
+
             if (cnt == 0 && Objects.equals(player.getPlayerName(), JungleRush.playerName) && Objects.equals(player.getScore(), this.player.getMaxScore())) {
                 cnt++;
                 gameOverText.setColor(new Color(0, 1, gameOverText.getOpacity(), 1));
@@ -137,7 +149,9 @@ public class GameOverScreen implements Screen {
 
     private void update() {
         if (Gdx.input.isTouched() || Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+            gameScreen.dispose();
             game.setScreen(new GameScreen(game));
+            dispose();
         }
     }
 

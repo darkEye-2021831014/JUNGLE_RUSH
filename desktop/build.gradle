@@ -1,3 +1,7 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
+}
+
 sourceCompatibility = 1.8
 sourceSets.main.java.srcDirs = [ "src/" ]
 sourceSets.main.resources.srcDirs = ["../assets"]
@@ -6,6 +10,16 @@ project.ext.mainClassName = "com.junglerush.DesktopLauncher"
 project.ext.assetsDir = new File("../assets")
 
 import org.gradle.internal.os.OperatingSystem
+
+
+shadowJar {
+    manifest {
+        attributes 'Main-Class': 'com.junglerush.DesktopLauncher'
+    }
+    // Exclude any files not needed in the JAR
+    exclude 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.SF'
+    mergeServiceFiles()
+}
 
 tasks.register('run', JavaExec) {
     dependsOn classes

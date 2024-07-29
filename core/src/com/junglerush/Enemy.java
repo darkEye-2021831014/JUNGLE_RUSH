@@ -164,4 +164,10 @@ public class Enemy {
     public long getMaxAllowed() {
         return maxAllowed;
     }
+
+    public void cleanUp()
+    {
+        for(Texture texture:textures)
+            texture.dispose();
+    }
 }

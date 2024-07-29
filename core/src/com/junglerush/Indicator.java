@@ -13,6 +13,7 @@ public class Indicator {
     private Array<Particle> particles;
     private int indicator,totalParticles;
     private float centerX,centerY;
+    private Color color;
     public Indicator(int totalParticles, BigInteger playerScore, BigInteger enemyScore){
         particles = new Array<>();
         this.totalParticles = totalParticles;
@@ -45,7 +46,6 @@ public class Indicator {
 
 
     public void draw(ShapeRenderer shapeRenderer,float radius){
-        Color color;
         if(this.indicator < 0) color =Color.RED;
         else if(this.indicator > 0) color =Color.GREEN;
         else color = Color.BLACK;

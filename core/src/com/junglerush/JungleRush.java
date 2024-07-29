@@ -2,8 +2,8 @@ package com.junglerush;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 
@@ -33,5 +33,6 @@ public class JungleRush extends Game {
 		batch.dispose();
 		shapeRenderer.dispose();
 		scoreManager.disconnect();
+		Gdx.app.exit();
 	}
 }

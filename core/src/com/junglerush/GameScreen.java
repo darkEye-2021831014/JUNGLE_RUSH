@@ -1,10 +1,7 @@
 package com.junglerush;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.assets.AssetManager;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
@@ -13,7 +10,6 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
-import sun.nio.cs.ext.MacHebrew;
 
 
 public class GameScreen implements Screen {
@@ -22,8 +18,8 @@ public class GameScreen implements Screen {
 
     private final int TOTAL_TILES = 20;
     private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,
-            BOARDER_WIDTH;
-    private boolean isPaused = true,onHold = true,gameOver = false,increaseVolume = true;
+            BOARDER_WIDTH,musicIndex,RIVER_WIDTH;
+    private boolean isPaused = true,onHold = true,gameOver = false,showLineIndicator = false;
     private float elapsedTime = 0;
     private int totalCount = 3;
     private Rectangle centerRectangle;
@@ -39,8 +35,10 @@ public class GameScreen implements Screen {
             collisionWithStrongCar,collisionWithStrongAnimal,collisionWithGreenAnimal,animalCollisionGameOver,
             collisionWithNormalCar;
     private Array<Sound> forestBirdSounds;
-    private Array<Sound> soundArray;
-    private Array<Music> bgMusic;
+    private Array<Sound> soundArray,allSounds;
+    private Array<MusicManager> bgMusic;
+    private final collisionIndicator collisionLineLeft,collisionLineRight;
+    private PauseScreen pauseScreen;
 
 
 
@@ -66,6 +64,8 @@ public class GameScreen implements Screen {
         indicatorAnimal = new Indicator(200,player.getScore(),enemyCar.getScore());
 
         collision = new Collision(player,background,enemyCar,enemyAnimal,this,game);
+        collisionLineLeft = new collisionIndicator(Color.GREEN,1,game.SCREEN_HEIGHT);
+        collisionLineRight = new collisionIndicator(Color.GREEN,1,game.SCREEN_HEIGHT);
 
         initializeBackground();
 
@@ -73,9 +73,9 @@ public class GameScreen implements Screen {
     }
 
     private void startPlayingSounds() {
-        countdownSound.play();
         carStartingSound.play();
         roadSound.loop(0.4f);
+        countdownSound.play(0.17f);
     }
 
     private void initializeBackground() {
@@ -90,16 +90,36 @@ public class GameScreen implements Screen {
         loadCarIndicator();
         loadAnimalIndicator();
         loadSounds();
+        loadCollisionLine();
+        loadPauseScreen();
 
 
     }
 
+    private void loadPauseScreen() {
+        pauseScreen = new PauseScreen();
+
+        pauseScreen.addPauseElement(new PauseElement("Menu/pauseScreen.png",this.RIVER_WIDTH,game.SCREEN_HEIGHT-150,ButtonType.PAUSE_SCREEN));
+        pauseScreen.addPauseElement(new PauseElement("Menu/Resume.png",this.RIVER_WIDTH,
+                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.RESUME));
+        pauseScreen.addPauseElement(new PauseElement("Menu/Scorecard.png",this.RIVER_WIDTH,
+                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.SCORECARD));
+        pauseScreen.addPauseElement(new PauseElement("Menu/Quit.png",this.RIVER_WIDTH,
+                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.QUIT));
+    }
+
+    private void loadCollisionLine() {
+        collisionLineLeft.setRectangle(player.getRectangle().x,0);
+        collisionLineRight.setRectangle(player.getRectangle().x+player.getRectangle().width,0);
+    }
+
     private void loadSounds() {
+        allSounds = new Array<>();
         soundArray = new Array<>();
         forestBirdSounds = new Array<>();
         bgMusic  = new Array<>();
 
-        countdownSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/gameCountdown.wav"));
+        countdownSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/countDown.wav"));
         carStartingSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/carStarting1.mp3"));
         roadSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/roadAmbience1.mp3"));
         boarderCollisionSound = Gdx.audio.newSound(Gdx.files.internal("Sounds/fallingInWater.wav"));
@@ -114,13 +134,29 @@ public class GameScreen implements Screen {
         forestBirdSounds.add(Gdx.audio.newSound(Gdx.files.internal("Sounds/forestBirdsChirpingSound.wav")));
         forestBirdSounds.add(Gdx.audio.newSound(Gdx.files.internal("Sounds/forestBirdsChirpingSound1.wav")));
 
-        for(int i=1;i<=2;i++)
-            bgMusic.add(Gdx.audio.newMusic(Gdx.files.internal("Music/gamePlayBG"+i+".mp3")));
+        for (int i = 1; i <= 5; i++) {
+            bgMusic.add(new MusicManager(Gdx.audio.newMusic(Gdx.files.internal("Music/gamePlayBG"+i+".mp3")),0.4f,1f,false));
+        }
+        musicIndex = 0;
 
         soundArray.add(countdownSound);
         soundArray.add(carStartingSound);
         soundArray.add(roadSound);
 
+        allSounds.add(countdownSound);
+        allSounds.add(carStartingSound);
+        allSounds.add(roadSound);
+        allSounds.add(boarderCollisionSound);
+        allSounds.add(carSpeedUpSound);
+        allSounds.add(pauseSound);
+        allSounds.add(resumeSound);
+        allSounds.add(collisionWithStrongCar);
+        allSounds.add(collisionWithStrongAnimal);
+        allSounds.add(collisionWithGreenAnimal);
+        allSounds.add(animalCollisionGameOver);
+        allSounds.add(collisionWithNormalCar);
+        allSounds.add(forestBirdSounds.get(0));
+        allSounds.add(forestBirdSounds.get(1));
     }
 
     private void loadAnimalIndicator() {
@@ -276,6 +312,11 @@ public class GameScreen implements Screen {
             indicatorCarLeft.draw(game.shapeRenderer, 0.7f);
             indicatorCarRight.draw(game.shapeRenderer, 0.7f);
             indicatorAnimal.draw(game.shapeRenderer, 0.5f);
+
+            if(showLineIndicator) {
+                collisionLineLeft.draw(game.shapeRenderer);
+                collisionLineRight.draw(game.shapeRenderer);
+            }
             game.shapeRenderer.end();
 
             game.batch.begin();
@@ -289,11 +330,9 @@ public class GameScreen implements Screen {
         if(onHold)
             countDown();
         else {
+            updateBgMusic();
             if (isPaused) {
-                playerScoreText.blinkingEffect(0.04f,0.03f,0.3f);
-                playerScoreText.setRectangle(centerRectangle);
-                playerScoreText.setColor(new Color(playerScoreText.getOpacity(), 1, 1, playerScoreText.getOpacity()));
-                playerScoreText.draw(game.batch, "Press Space To Resume");
+                pauseScreen.draw();
             } else {
                 update();
             }
@@ -318,12 +357,8 @@ public class GameScreen implements Screen {
                 setPaused(false);
 
                 //start playing bg music
-                for(Music bgMusic:bgMusic)
-                {
-                    bgMusic.setVolume(0.01f);
-                    bgMusic.setLooping(true);
-                    bgMusic.play();
-                }
+                bgMusic.get(musicIndex).getMusic().play();
+                bgMusic.get(musicIndex).update();
                 return;
             }
         }
@@ -338,8 +373,7 @@ public class GameScreen implements Screen {
     }
 
 
-    private void update()
-    {
+    private void update() {
         elapsedTime += Gdx.graphics.getDeltaTime();
         if(elapsedTime >= MathUtils.random(3,8)) {
             forestBirdSounds.get(MathUtils.random(0, forestBirdSounds.size - 1)).play(0.95f);
@@ -353,21 +387,26 @@ public class GameScreen implements Screen {
         updatePlayer();
         updateEnemyAnimal();
 
-        updateBgMusic(0.3f,0.8f);
-
         collision.update();
-
+        if(showLineIndicator) {
+            collisionLineLeft.update(player.getRectangle().x ,enemyCar, enemyAnimal);
+            collisionLineRight.update(player.getRectangle().x + player.getRectangle().width, enemyCar, enemyAnimal);
+        }
     }
 
-
-    private void updateBgMusic(float lowerLimit,float upperLimit) {
-        for(Music bgMusic:bgMusic) {
-            if(bgMusic.getVolume() <= lowerLimit) increaseVolume = true;
-            if(bgMusic.getVolume() >= upperLimit) increaseVolume = false;
-            if (increaseVolume) bgMusic.setVolume(bgMusic.getVolume() + 0.002f);
-            else bgMusic.setVolume(bgMusic.getVolume() - 0.002f);
+    private void updateBgMusic() {
+        if(bgMusic.get(musicIndex).getMusic().getPosition() >=40)
+        {
+            bgMusic.get(musicIndex).getMusic().pause();
+            int prevIndex = musicIndex;
+            musicIndex = MathUtils.random(bgMusic.size-1);
+            if(musicIndex != prevIndex)
+                bgMusic.get(prevIndex).getMusic().stop();
+            bgMusic.get(musicIndex).getMusic().play();
         }
+        bgMusic.get(musicIndex).update();
 
+//        System.out.println(bgMusic.get(musicIndex).getCurVolume() + " " + bgMusic.get(musicIndex).checkIncreasing() + " " + bgMusic.get(musicIndex).changeBy() );
     }
 
     private void updateAnimalIndicator() {
@@ -470,6 +509,19 @@ public class GameScreen implements Screen {
 
     @Override
     public void dispose() {
+        for(Sound sound:allSounds)
+            sound.dispose();
+        for(MusicManager musicManager:bgMusic)
+            musicManager.cleanUp();
+        forestLeft.cleanUp();
+        forestRight.cleanUp();
+        player.cleanUp();
+        enemyCar.cleanUp();
+        enemyAnimal.cleanUp();
+        enemyScoreText.cleanUp();
+        enemyAnimalScoreText.cleanUp();
+        playerScoreText.cleanUp();
+        background.cleanUp();
     }
 
 
@@ -483,6 +535,7 @@ public class GameScreen implements Screen {
         this.BOARDER_WIDTH = (int)(0.5 * this.ELEMENT_WIDTH);
         this.JUNGLE_WIDTH = this.JUNGLE_FACTOR * this.ELEMENT_WIDTH;
         this.ROAD_WIDTH = this.JUNGLE_WIDTH;
+        this.RIVER_WIDTH = this.RIVER_FACTOR*this.ELEMENT_WIDTH;
 
         //center rectangle to show text
         centerRectangle = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,300,ROAD_WIDTH,game.SCREEN_HEIGHT-300);
@@ -563,7 +616,19 @@ public class GameScreen implements Screen {
         return forestBirdSounds;
     }
 
-    public Array<Music> getBgMusic() {
+    public Array<MusicManager> getBgMusic() {
         return bgMusic;
     }
+
+    public void setShowLineIndicator(boolean showLineIndicator) {
+        this.showLineIndicator = showLineIndicator;
+    }
+
+    public boolean isShowLineIndicator() {
+        return showLineIndicator;
+    }
+
+//    public PauseScreen getPauseScreen() {
+//        return pauseScreen;
+//    }
 }

@@ -1,6 +1,5 @@
 package com.junglerush;
 
-import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
@@ -134,5 +133,6 @@ public class MainMenuScreen implements Screen {
         tigImage.dispose();
         lioImage.dispose();
         deerImage.dispose();
+        mainMenuText.cleanUp();
     }
 }
