@@ -18,7 +18,7 @@ public class GameScreen implements Screen {
 
     private final int TOTAL_TILES = 20;
     private int ELEMENT_WIDTH,ELEMENT_HEIGHT,JUNGLE_FACTOR,RIVER_FACTOR,JUNGLE_WIDTH,ROAD_WIDTH,
-            BOARDER_WIDTH,musicIndex,RIVER_WIDTH;
+            BOARDER_WIDTH,musicIndex,RIVER_WIDTH,MUSIC_VOLUME=100;
     private boolean isPaused = true,onHold = true,gameOver = false,showLineIndicator = false;
     private float elapsedTime = 0;
     private int totalCount = 3;
@@ -39,6 +39,7 @@ public class GameScreen implements Screen {
     private Array<MusicManager> bgMusic;
     private final collisionIndicator collisionLineLeft,collisionLineRight;
     private PauseScreen pauseScreen;
+    static GameState musicState;
 
 
 
@@ -99,13 +100,17 @@ public class GameScreen implements Screen {
     private void loadPauseScreen() {
         pauseScreen = new PauseScreen();
 
-        pauseScreen.addPauseElement(new PauseElement("Menu/pauseScreen.png",this.RIVER_WIDTH,game.SCREEN_HEIGHT-150,ButtonType.PAUSE_SCREEN));
+        pauseScreen.addPauseElement(new PauseElement("Menu/pauseScreen.png",this.RIVER_WIDTH,game.SCREEN_HEIGHT-50,ButtonType.PAUSE_SCREEN,this));
         pauseScreen.addPauseElement(new PauseElement("Menu/Resume.png",this.RIVER_WIDTH,
-                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.RESUME));
+                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.RESUME,this));
         pauseScreen.addPauseElement(new PauseElement("Menu/Scorecard.png",this.RIVER_WIDTH,
-                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.SCORECARD));
+                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.SCORECARD,this));
+        pauseScreen.addPauseElement(new PauseElement("Menu/Music.png",this.RIVER_WIDTH,
+                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.MUSIC,this));
+        pauseScreen.addPauseElement(new PauseElement("Menu/Sound.png",this.RIVER_WIDTH,
+                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.SOUND,this));
         pauseScreen.addPauseElement(new PauseElement("Menu/Quit.png",this.RIVER_WIDTH,
-                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.QUIT));
+                pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.QUIT,this));
     }
 
     private void loadCollisionLine() {
@@ -357,6 +362,7 @@ public class GameScreen implements Screen {
                 setPaused(false);
 
                 //start playing bg music
+                musicState = GameState.MUSIC_ON;
                 bgMusic.get(musicIndex).getMusic().play();
                 bgMusic.get(musicIndex).update();
                 return;
@@ -395,16 +401,25 @@ public class GameScreen implements Screen {
     }
 
     private void updateBgMusic() {
-        if(bgMusic.get(musicIndex).getMusic().getPosition() >=40)
-        {
-            bgMusic.get(musicIndex).getMusic().pause();
-            int prevIndex = musicIndex;
-            musicIndex = MathUtils.random(bgMusic.size-1);
-            if(musicIndex != prevIndex)
-                bgMusic.get(prevIndex).getMusic().stop();
-            bgMusic.get(musicIndex).getMusic().play();
+        for(MusicManager manager:bgMusic)
+            manager.setCurVolumePercent(this.MUSIC_VOLUME);
+
+        if(musicState == GameState.MUSIC_ON) {
+            if(!bgMusic.get(musicIndex).getMusic().isPlaying())
+            {
+                bgMusic.get(musicIndex).getMusic().play();
+            }
+            if (bgMusic.get(musicIndex).getMusic().getPosition() >= 40) {
+                bgMusic.get(musicIndex).getMusic().pause();
+                int prevIndex = musicIndex;
+                musicIndex = MathUtils.random(bgMusic.size - 1);
+                if (musicIndex != prevIndex)
+                    bgMusic.get(prevIndex).getMusic().stop();
+                bgMusic.get(musicIndex).getMusic().play();
+            }
+            bgMusic.get(musicIndex).update();
         }
-        bgMusic.get(musicIndex).update();
+        else bgMusic.get(musicIndex).getMusic().stop();
 
 //        System.out.println(bgMusic.get(musicIndex).getCurVolume() + " " + bgMusic.get(musicIndex).checkIncreasing() + " " + bgMusic.get(musicIndex).changeBy() );
     }
@@ -536,6 +551,7 @@ public class GameScreen implements Screen {
         this.JUNGLE_WIDTH = this.JUNGLE_FACTOR * this.ELEMENT_WIDTH;
         this.ROAD_WIDTH = this.JUNGLE_WIDTH;
         this.RIVER_WIDTH = this.RIVER_FACTOR*this.ELEMENT_WIDTH;
+        musicState = GameState.MUSIC_OFF;
 
         //center rectangle to show text
         centerRectangle = new Rectangle(this.JUNGLE_WIDTH+this.BOARDER_WIDTH,300,ROAD_WIDTH,game.SCREEN_HEIGHT-300);
@@ -628,7 +644,11 @@ public class GameScreen implements Screen {
         return showLineIndicator;
     }
 
-//    public PauseScreen getPauseScreen() {
-//        return pauseScreen;
-//    }
+    public void setMUSIC_VOLUME(int MUSIC_VOLUME) {
+        this.MUSIC_VOLUME = MUSIC_VOLUME;
+    }
+
+    public int getMUSIC_VOLUME() {
+        return MUSIC_VOLUME;
+    }
 }

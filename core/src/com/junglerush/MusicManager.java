@@ -9,7 +9,9 @@ public class MusicManager {
     private float curVolume;
     private final int oneQatar;
     private boolean isIncreasing;
-    private final float maxVolume,minVolume; //highest and lowest volume of the music
+    private int curVolumePercent;
+    private final float defaultMaxVolume,defaultMinVolume;
+    private float maxVolume,minVolume; //highest and lowest volume of the music
     private final boolean isMax;
 
     public MusicManager(Music music, float minVolume, float maxVolume,boolean isMax)
@@ -17,8 +19,11 @@ public class MusicManager {
         this.isMax = isMax;
         this.music = music;
         this.isIncreasing = true;
-        this.maxVolume=maxVolume;
-        this.minVolume=minVolume;
+        this.defaultMaxVolume = maxVolume;
+        this.defaultMinVolume = minVolume;
+        this.maxVolume=this.defaultMaxVolume;
+        this.minVolume=this.defaultMinVolume;
+        this.curVolumePercent = 100;
         oneQatar = 10;
 
         if(this.isMax)curVolume = this.maxVolume;
@@ -74,11 +79,63 @@ public class MusicManager {
     }
 
 
+
+
+
+
     public float getCurVolume() {
         return curVolume;
     }
 
+    public void setCurVolume(float curVolume) {
+        this.curVolume = curVolume;
+    }
 
+    public int getOneQatar() {
+        return oneQatar;
+    }
+
+    public boolean isIncreasing() {
+        return isIncreasing;
+    }
+
+    public void setIncreasing(boolean increasing) {
+        isIncreasing = increasing;
+    }
+
+    public int getCurVolumePercent() {
+        return curVolumePercent;
+    }
+
+    public void setCurVolumePercent(int newVolumePercent) {
+        minVolume = (defaultMinVolume*newVolumePercent)/100f;
+        maxVolume = (defaultMaxVolume*newVolumePercent)/100f;
+        if(this.isMax)curVolume = this.maxVolume;
+        else curVolume = this.minVolume;
+        setVolume(curVolume);
+
+        this.curVolumePercent = newVolumePercent;
+    }
+
+    public float getMaxVolume() {
+        return maxVolume;
+    }
+
+    public void setMaxVolume(float maxVolume) {
+        this.maxVolume = maxVolume;
+    }
+
+    public float getMinVolume() {
+        return minVolume;
+    }
+
+    public void setMinVolume(float minVolume) {
+        this.minVolume = minVolume;
+    }
+
+    public boolean isMax() {
+        return isMax;
+    }
 
     public void cleanUp()
     {
