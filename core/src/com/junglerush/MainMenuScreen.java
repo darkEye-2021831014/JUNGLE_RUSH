@@ -2,6 +2,7 @@ package com.junglerush;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -34,6 +35,8 @@ public class MainMenuScreen implements Screen {
 
     @Override
     public void render(float delta) {
+        HandleInput();
+
         ScreenUtils.clear(0, 0, 0.2f, 1);
 
         String welcome = "Welcome To Jungle Rush!",
@@ -67,13 +70,12 @@ public class MainMenuScreen implements Screen {
         mainMenuText.drawXY(game.batch, play, game.SCREEN_WIDTH / 2, game.SCREEN_HEIGHT / 2-30);
 
         game.batch.end();
+    }
 
-        // Check for touch or space key press
-        if (Gdx.input.justTouched() || Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-            UserNamePrompt();
-            game.setScreen(new GameScreen(game));
-            dispose();
-        }
+    private void SwitchToGameScreen() {
+        UserNamePrompt();
+        game.setScreen(new GameScreen(game));
+        this.dispose();
     }
 
     private void UserNamePrompt() {
@@ -104,6 +106,71 @@ public class MainMenuScreen implements Screen {
 
         }
     }
+
+
+
+
+
+
+
+
+
+
+    void HandleInput()
+    {
+        Gdx.input.setInputProcessor(new InputProcessor() {
+            @Override
+            public boolean keyDown(int key) {
+                if(key == Input.Keys.SPACE)
+                    SwitchToGameScreen();
+                return false;
+            }
+
+            @Override
+            public boolean keyUp(int i) {
+                return false;
+            }
+
+            @Override
+            public boolean keyTyped(char c) {
+                return false;
+            }
+
+            @Override
+            public boolean touchDown(int i, int i1, int i2, int button) {
+                if(button == Input.Buttons.LEFT)
+                    SwitchToGameScreen();
+                return false;
+            }
+
+            @Override
+            public boolean touchUp(int i, int i1, int i2, int i3) {
+                return false;
+            }
+
+            @Override
+            public boolean touchCancelled(int i, int i1, int i2, int i3) {
+                return false;
+            }
+
+            @Override
+            public boolean touchDragged(int i, int i1, int i2) {
+                return false;
+            }
+
+            @Override
+            public boolean mouseMoved(int i, int i1) {
+                return false;
+            }
+
+            @Override
+            public boolean scrolled(float v, float v1) {
+                return false;
+            }
+        });
+    }
+
+
 
     @Override
     public void show() {

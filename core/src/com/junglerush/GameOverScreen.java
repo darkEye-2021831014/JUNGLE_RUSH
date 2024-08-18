@@ -17,7 +17,7 @@ import static com.junglerush.JungleRush.scoreManager;
 public class GameOverScreen implements Screen {
     private final Player player;
     private final JungleRush game;
-    private final GameScreen gameScreen;
+    private Screen gameScreen;
     private final Score gameOverText;
     private final Score gameOverTextBold;
     private Texture backgroundTexture1;
@@ -149,9 +149,8 @@ public class GameOverScreen implements Screen {
 
     private void update() {
         if (Gdx.input.isTouched() || Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-            gameScreen.dispose();
             game.setScreen(new GameScreen(game));
-            dispose();
+            this.dispose();
         }
     }
 
@@ -177,6 +176,8 @@ public class GameOverScreen implements Screen {
 
     @Override
     public void dispose() {
+        if(this.gameScreen != null)
+            this.gameScreen.dispose();
         backgroundTexture1.dispose();
         backgroundTexture2.dispose();
         logoImage.dispose();
@@ -186,6 +187,8 @@ public class GameOverScreen implements Screen {
         tigImage.dispose();
         lioImage.dispose();
         deerImage.dispose();
+        gameOverText.cleanUp();
+        gameOverTextBold.cleanUp();
 
     }
 }

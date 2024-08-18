@@ -92,4 +92,7 @@ public class Indicator {
         return centerY;
     }
 
+    public Color getColor() {
+        return color;
+    }
 }

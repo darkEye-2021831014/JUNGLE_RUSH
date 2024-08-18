@@ -37,7 +37,7 @@ public class GameScreen implements Screen {
     private Array<Sound> forestBirdSounds;
     private Array<Sound> soundArray,allSounds;
     private Array<MusicManager> bgMusic;
-    private final collisionIndicator collisionLineLeft,collisionLineRight;
+    private final collisionIndicator collisionIndicator;
     private PauseScreen pauseScreen;
     static GameState musicState;
 
@@ -65,8 +65,7 @@ public class GameScreen implements Screen {
         indicatorAnimal = new Indicator(200,player.getScore(),enemyCar.getScore());
 
         collision = new Collision(player,background,enemyCar,enemyAnimal,this,game);
-        collisionLineLeft = new collisionIndicator(Color.GREEN,1,game.SCREEN_HEIGHT);
-        collisionLineRight = new collisionIndicator(Color.GREEN,1,game.SCREEN_HEIGHT);
+        collisionIndicator = new collisionIndicator(600.0f);
 
         initializeBackground();
 
@@ -91,7 +90,7 @@ public class GameScreen implements Screen {
         loadCarIndicator();
         loadAnimalIndicator();
         loadSounds();
-        loadCollisionLine();
+        loadCollisionIndicator();
         loadPauseScreen();
 
 
@@ -113,9 +112,9 @@ public class GameScreen implements Screen {
                 pauseScreen.getPauseElements().get(pauseScreen.getPauseElements().size-1).getButton().getY()-20,ButtonType.QUIT,this));
     }
 
-    private void loadCollisionLine() {
-        collisionLineLeft.setRectangle(player.getRectangle().x,0);
-        collisionLineRight.setRectangle(player.getRectangle().x+player.getRectangle().width,0);
+    private void loadCollisionIndicator() {
+        collisionIndicator.setTexture(new Texture("Other/alert.png"), new Texture("Other/ok.png"));
+        collisionIndicator.setRectangle(player,true);
     }
 
     private void loadSounds() {
@@ -311,22 +310,18 @@ public class GameScreen implements Screen {
             forestLeft.draw(game.batch);
             forestRight.draw(game.batch);
             player.draw(game.batch, game.SCREEN_WIDTH, game.SCREEN_HEIGHT, background);
+
+            if(showLineIndicator) {
+                collisionIndicator.draw(game.batch);
+            }
+            PauseResume();
             game.batch.end();
 
             game.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             indicatorCarLeft.draw(game.shapeRenderer, 0.7f);
             indicatorCarRight.draw(game.shapeRenderer, 0.7f);
             indicatorAnimal.draw(game.shapeRenderer, 0.5f);
-
-            if(showLineIndicator) {
-                collisionLineLeft.draw(game.shapeRenderer);
-                collisionLineRight.draw(game.shapeRenderer);
-            }
             game.shapeRenderer.end();
-
-            game.batch.begin();
-            PauseResume();
-            game.batch.end();
         }
     }
 
@@ -395,8 +390,7 @@ public class GameScreen implements Screen {
 
         collision.update();
         if(showLineIndicator) {
-            collisionLineLeft.update(player.getRectangle().x ,enemyCar, enemyAnimal);
-            collisionLineRight.update(player.getRectangle().x + player.getRectangle().width, enemyCar, enemyAnimal);
+            collisionIndicator.update(enemyCar,enemyAnimal,player,indicatorAnimal,indicatorCarLeft);
         }
     }
 
@@ -537,6 +531,8 @@ public class GameScreen implements Screen {
         enemyAnimalScoreText.cleanUp();
         playerScoreText.cleanUp();
         background.cleanUp();
+        pauseScreen.cleanUp();
+        collisionIndicator.cleanUp();
     }
 
 

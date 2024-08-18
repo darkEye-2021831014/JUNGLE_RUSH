@@ -2,6 +2,7 @@ package com.junglerush;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -30,9 +31,12 @@ public class JungleRush extends Game {
 	
 	@Override
 	public void dispose () {
+		if(getScreen()!=null)
+			getScreen().dispose();
 		batch.dispose();
 		shapeRenderer.dispose();
 		scoreManager.disconnect();
-		Gdx.app.exit();
+
+		System.exit(0);  //Instantly Close Everything
 	}
 }

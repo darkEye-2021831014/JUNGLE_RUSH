@@ -35,4 +35,9 @@ public class PauseScreen {
     public Array<PauseElement> getPauseElements() {
         return pauseElements;
     }
+
+    public void cleanUp()
+    {
+        stage.dispose();
+    }
 }

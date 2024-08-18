@@ -55,6 +55,8 @@ project(":desktop") {
         api "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
 
         implementation "com.badlogicgames.gdx:gdx-lwjgl3-glfw-awt-macos:$gdxVersion"
+        implementation 'org.mongodb:mongodb-driver-sync:5.1.2'
+
     }
 
 
@@ -73,7 +75,7 @@ project(":core") {
         api "com.badlogicgames.gdx:gdx-ai:$aiVersion"
         api "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
 
-        implementation 'org.mongodb:mongodb-driver-sync:4.7.1'
+        implementation 'org.mongodb:mongodb-driver-sync:5.1.2'
         implementation 'org.slf4j:slf4j-api:1.7.32'
 
     }

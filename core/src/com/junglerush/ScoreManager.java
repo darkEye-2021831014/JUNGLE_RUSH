@@ -6,10 +6,13 @@ import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.utils.Array;
 import java.io.*;
 import java.math.BigInteger;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+
+import com.mongodb.*;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -23,11 +26,9 @@ import java.nio.file.Files;
 
 
 public class ScoreManager {
-    private final String CONNECTION_STRING = "mongodb+srv://ashrafulislamdarkeye:1NfaFxQb1kRYcROD@cluster0.72phzuy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
     private MongoClient mongoClient;
     private MongoDatabase database;
     private MongoCollection<Document> collection;
-
 
     private final String fileName = "highestScores.txt";
     private final Array<PlayerData> playerData;
@@ -36,7 +37,6 @@ public class ScoreManager {
     public ScoreManager() {
         if(NetworkUtils.hasInternetConnection()) {
             connect();
-            isConnected = true;
         }
         this.playerData = new Array<>();
         loadData();
@@ -45,10 +45,26 @@ public class ScoreManager {
 
 
     public void connect() {
-        mongoClient = MongoClients.create(CONNECTION_STRING);
-        database = mongoClient.getDatabase("myDatabase");
-        collection = database.getCollection("fileContents");
-        System.out.println("Connected to the database successfully");
+//      String password = URLEncoder.encode("LmpxcOV7BRihl5Bh", "UTF-8");
+        String CONNECTION_STRING = "mongodb+srv://darkeye:LmpxcOV7BRihl5Bh@highestscores.vc5rv.mongodb.net/muDatabase?retryWrites=true&w=majority&appName=HighestScores";
+
+        try
+        {
+            mongoClient = MongoClients.create(CONNECTION_STRING);
+            database = mongoClient.getDatabase("myDatabase");
+            System.out.println("Connected to the database successfully");
+        }
+        catch (Exception e)
+        {
+            isConnected = false;
+        }
+
+        if(mongoClient!=null)
+            isConnected = true;
+        
+        if(isConnected)
+            collection = database.getCollection("fileContents");
+
     }
 
     public void disconnect() {
@@ -79,7 +95,7 @@ public class ScoreManager {
         else
         {
             System.out.println("Error! Failed To Load File");
-            return Gdx.files.local("Files/"+fileName).readString();
+            return Gdx.files.external("Files/"+fileName).readString();
         }
     }
 
@@ -100,11 +116,10 @@ public class ScoreManager {
         if(NetworkUtils.hasInternetConnection()) {
             if(!isConnected) {
                 connect();
-                isConnected = true;
             }
             fileContent = getFileContent();
         }
-        else fileContent = Gdx.files.local("Files/"+fileName).readString();
+        else fileContent = Gdx.files.external("Files/"+fileName).readString();
 
 
         for (String line : fileContent.split("\n")) {
@@ -152,7 +167,7 @@ public class ScoreManager {
             saveFileContent(stringBuilder.toString());
 
         //write to local file
-        Gdx.files.local("Files/"+fileName).writeString(stringBuilder.toString(),false);
+        Gdx.files.external("Files/"+fileName).writeString(stringBuilder.toString(),false);
     }
 
 }

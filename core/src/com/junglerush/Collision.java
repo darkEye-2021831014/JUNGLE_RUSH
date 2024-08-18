@@ -12,7 +12,6 @@ import com.badlogic.gdx.utils.Timer.Task;
 import java.math.BigInteger;
 import com.badlogic.gdx.audio.Music;
 
-
 public class Collision {
     private final Player player;
     private final Background background;
@@ -117,6 +116,7 @@ public class Collision {
             sound.stop();
         for(MusicManager musicManager:gameScreen.getBgMusic())
             musicManager.getMusic().stop();
+
         game.setScreen(new GameOverScreen(player,game,gameScreen));
     }
 
