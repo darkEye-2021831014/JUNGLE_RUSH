@@ -43,11 +43,24 @@ public class ScoreManager {
     }
 
 
+    private String encode(String s)
+    {
+        String encoded = s;
+        try {
+            encoded = URLEncoder.encode(s, "UTF-8");
+        }
+        catch (Exception e)
+        {
+            System.out.println("Failed To Encode!");
+        }
+        return encoded;
+    }
+
+
 
     public void connect() {
-//      String password = URLEncoder.encode("LmpxcOV7BRihl5Bh", "UTF-8");
-        String CONNECTION_STRING = "mongodb+srv://darkeye:LmpxcOV7BRihl5Bh@highestscores.vc5rv.mongodb.net/muDatabase?retryWrites=true&w=majority&appName=HighestScores";
 
+        String CONNECTION_STRING = "mongodb+srv://"+encode("darkeye")+":"+encode("LmpxcOV7BRihl5Bh")+"@highestscores.vc5rv.mongodb.net/muDatabase?retryWrites=true&w=majority&appName=HighestScores";
         try
         {
             mongoClient = MongoClients.create(CONNECTION_STRING);
@@ -61,10 +74,8 @@ public class ScoreManager {
 
         if(mongoClient!=null)
             isConnected = true;
-        
         if(isConnected)
             collection = database.getCollection("fileContents");
-
     }
 
     public void disconnect() {
@@ -87,7 +98,9 @@ public class ScoreManager {
     }
 
     public String getFileContent() {
-        Document result = collection.find(Filters.eq("fileIdentifier", "uniqueFileIdentifier")).first();
+        Document result = null;
+        if(isConnected)
+            result = collection.find(Filters.eq("fileIdentifier", "uniqueFileIdentifier")).first();
 
         if(result != null) {
             return result.getString("fileContent");
